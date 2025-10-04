@@ -1023,6 +1023,79 @@
         }
       };
     })();
+    const ConfirmDialog = (() => {
+      const dialog = document.getElementById('confirm-dialog');
+      const titleNode = dialog.querySelector('[data-role="title"]');
+      const messageNode = dialog.querySelector('[data-role="message"]');
+      const confirmButton = dialog.querySelector('[data-role="confirm"]');
+      const cancelButton = dialog.querySelector('[data-role="cancel"]');
+
+      const TONE_STYLES = {
+        primary: ['bg-indigo-600', 'hover:bg-indigo-500', 'focus-visible:outline-indigo-600'],
+        danger: ['bg-rose-600', 'hover:bg-rose-500', 'focus-visible:outline-rose-600']
+      };
+      const toneClassSet = new Set(Object.values(TONE_STYLES).flat());
+      const confirmBaseClasses = Array.from(confirmButton.classList).filter(
+        (className) => !toneClassSet.has(className)
+      );
+      const cancelBaseClasses = Array.from(cancelButton.classList);
+
+      let resolver = null;
+
+      const openDialog = () => {
+        if (typeof dialog.showModal === 'function') {
+          dialog.showModal();
+        } else {
+          dialog.setAttribute('open', 'true');
+        }
+      };
+
+      const closeDialog = () => {
+        if (typeof dialog.close === 'function') {
+          dialog.close();
+        } else {
+          dialog.removeAttribute('open');
+        }
+      };
+
+      const resolveWith = (value) => {
+        if (!resolver) return;
+        const resolve = resolver;
+        resolver = null;
+        closeDialog();
+        resolve(value);
+      };
+
+      const applyTone = (tone) => {
+        confirmButton.className = '';
+        confirmButton.classList.add(...confirmBaseClasses);
+        const toneClasses = TONE_STYLES[tone] || TONE_STYLES.primary;
+        confirmButton.classList.add(...toneClasses);
+      };
+
+      const resetButtons = () => {
+        cancelButton.className = '';
+        cancelButton.classList.add(...cancelBaseClasses);
+      };
+
+      confirmButton.addEventListener('click', () => {
+        resolveWith(true);
+      });
+
+      cancelButton.addEventListener('click', () => {
+        resolveWith(false);
+      });
+
+      dialog.addEventListener('cancel', (event) => {
+        event.preventDefault();
+        resolveWith(false);
+      });
+
+      dialog.addEventListener('click', (event) => {
+        if (event.target === dialog) {
+          resolveWith(false);
+        }
+      });
 
     const Toast = (() => {
       const region = document.getElementById('toast-region');
@@ -1213,6 +1286,122 @@
         }
         buttons[nextIndex].focus();
         buttons[nextIndex].click();
+      };
+
+      return {
+        init() {
+          document.querySelectorAll('.tab-button').forEach((button, index) => {
+            buttons.push(button);
+            button.setAttribute('role', 'tab');
+            button.setAttribute('tabindex', index === 0 ? '0' : '-1');
+            button.addEventListener('click', () => {
+              buttons.forEach((btn) => btn.setAttribute('tabindex', '-1'));
+              button.setAttribute('tabindex', '0');
+              switchTo(button.dataset.target);
+            });
+            button.addEventListener('keydown', handleKeyNavigation);
+          });
+          switchTo(activeTab);
+        }
+      };
+    })();
+
+    const ClassModule = (() => {
+      const selector = document.getElementById('class-selector');
+      const manageButton = document.getElementById('manage-classes');
+      const dialog = document.getElementById('class-manager-dialog');
+      const closeButton = document.getElementById('class-manager-close');
+      const form = document.getElementById('class-form');
+      const nameField = document.getElementById('class-name');
+      const list = document.getElementById('class-list');
+      const template = document.getElementById('class-row-template');
+
+      const getStudentCount = (classId) => ZantraCore.getStudents(true).filter((student) => student.classId === classId).length;
+      const getAttendanceCount = (classId) => ZantraCore.getSnapshot().attendanceRecords.filter((record) => record.classId === classId).length;
+      const getNoteCount = (classId) => ZantraCore.getSnapshot().notes.filter((note) => note.classId === classId).length;
+
+      const renderSelector = () => {
+        const classes = ZantraCore.getClasses();
+        const activeClassId = ZantraCore.getActiveClassId();
+        selector.innerHTML = '';
+        classes.forEach((cls) => {
+          const option = document.createElement('option');
+          option.value = cls.id;
+          option.textContent = cls.name;
+          if (cls.id === activeClassId) {
+            option.selected = true;
+          }
+          selector.appendChild(option);
+        });
+      };
+
+      const renderList = () => {
+        const classes = ZantraCore.getClasses();
+        const activeClassId = ZantraCore.getActiveClassId();
+        list.innerHTML = '';
+        classes.forEach((cls) => {
+          const item = template.content.cloneNode(true);
+          const li = item.firstElementChild;
+          const input = li.querySelector('.class-name-input');
+          const studentBadge = li.querySelector('[data-role="student-count"]');
+          const activeBadge = li.querySelector('[data-role="active-badge"]');
+          const saveButton = li.querySelector('[data-action="save"]');
+          const deleteButton = li.querySelector('[data-action="delete"]');
+
+          input.value = cls.name;
+          input.dataset.classId = cls.id;
+          studentBadge.textContent = `${getStudentCount(cls.id)} students`;
+          if (cls.id === activeClassId) {
+            activeBadge.classList.remove('hidden');
+            li.classList.add('border-indigo-200');
+          }
+          const canDelete =
+            classes.length > 1 &&
+            cls.id !== activeClassId &&
+            getStudentCount(cls.id) === 0 &&
+            getAttendanceCount(cls.id) === 0 &&
+            getNoteCount(cls.id) === 0;
+          deleteButton.disabled = !canDelete;
+          deleteButton.classList.toggle('opacity-40', !canDelete);
+          deleteButton.classList.toggle('cursor-not-allowed', !canDelete);
+
+          saveButton.addEventListener('click', () => {
+            try {
+              ZantraCore.renameClass(cls.id, input.value);
+              Toast.success('Class updated successfully.');
+            } catch (error) {
+              Toast.error(error.message);
+            }
+          });
+
+          deleteButton.addEventListener('click', () => {
+            try {
+              ZantraCore.deleteClass(cls.id);
+              Toast.success('Class deleted.');
+            } catch (error) {
+              Toast.error(error.message);
+            }
+          });
+
+          list.appendChild(item);
+        });
+      };
+
+      const openDialog = () => {
+        renderList();
+        if (typeof dialog.showModal === 'function') {
+          dialog.showModal();
+        } else {
+          dialog.setAttribute('open', 'true');
+        }
+      };
+
+      const closeDialog = () => {
+        if (typeof dialog.close === 'function') {
+          dialog.close();
+        } else {
+          dialog.removeAttribute('open');
+        }
       };
 
       return {
@@ -2112,6 +2301,73 @@
         OverviewModule.refreshChart();
       };
 
+      const updateEncryptionUi = (status) => {
+        const snapshot = status || SecurityModule.getStatus();
+        const { supported, enabled, locked, hint } = snapshot;
+        const baseClass = 'inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold';
+        encryptionStatus.className = baseClass;
+        if (!supported) {
+          encryptionStatus.classList.add('bg-slate-200', 'text-slate-600');
+          encryptionStatus.textContent = 'Unavailable';
+        } else if (enabled) {
+          if (locked) {
+            encryptionStatus.classList.add('bg-amber-100', 'text-amber-700');
+            encryptionStatus.textContent = 'Locked';
+          } else {
+            encryptionStatus.classList.add('bg-emerald-100', 'text-emerald-700');
+            encryptionStatus.textContent = 'Enabled';
+          }
+        } else {
+          encryptionStatus.classList.add('bg-slate-100', 'text-slate-500');
+          encryptionStatus.textContent = 'Disabled';
+        }
+
+        encryptionUnsupported.classList.toggle('hidden', supported);
+        encryptionManageButton.disabled = !supported;
+        encryptionManageButton.setAttribute('aria-disabled', supported ? 'false' : 'true');
+        encryptionManageButton.classList.toggle('cursor-not-allowed', !supported);
+        encryptionManageButton.classList.toggle('opacity-50', !supported);
+        encryptionManageButton.textContent = enabled ? 'Update Passphrase' : 'Set Passphrase';
+
+        encryptionDisableButton.classList.toggle('hidden', !enabled);
+        encryptionDisableButton.disabled = !enabled;
+        encryptionDisableButton.setAttribute('aria-disabled', enabled ? 'false' : 'true');
+
+        if (hint) {
+          encryptionHintDisplay.textContent = `Hint: ${hint}`;
+          encryptionHintDisplay.classList.remove('hidden');
+        } else {
+          encryptionHintDisplay.textContent = '';
+          encryptionHintDisplay.classList.add('hidden');
+        }
+      };
+
+      const handleManageEncryption = async () => {
+        if (!SecurityModule.isSupported()) {
+          Toast.error('Encryption is not supported in this browser.');
+          return;
+        }
+        const changed = await SecurityModule.openManageDialog();
+        if (changed) {
+          Toast.success('Encryption passphrase updated. Data will be stored securely.');
+        }
+      };
+
+      const handleDisableEncryption = async () => {
+        const confirmed = await ConfirmDialog.confirm({
+          title: 'Disable encryption',
+          message: 'Disabling encryption will store future data unencrypted on this device. Continue?',
+          confirmLabel: 'Disable',
+          cancelLabel: 'Keep encrypted',
+          tone: 'danger'
+        });
+        if (!confirmed) return;
+        const disabled = await SecurityModule.disableEncryption();
+        if (disabled) {
+          Toast.info('Encryption disabled. Data is now stored unencrypted.');
+        }
+      };
+
       return {
         init() {
           form.addEventListener('submit', handleSubmit);
@@ -2122,8 +2378,7 @@
           logoRemove.addEventListener('click', handleLogoRemove);
           ZantraCore.subscribe('settings', syncSettings);
           populateForm();
-        },
-        applyBranding
+        }
       };
     })();
     const ExportModule = (() => {
@@ -2334,6 +2589,7 @@
         OverviewModule.refreshSnapshot();
         OverviewModule.refreshChart();
         SettingsModule.init();
+        CsvImportModule.init();
         ExportModule.init();
       };
 
