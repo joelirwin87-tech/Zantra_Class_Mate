@@ -42,10 +42,6 @@
         <button id="export-csv" class="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-emerald-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600" type="button" aria-label="Export data as CSV">
           <span>Export CSV</span>
         </button>
-        <button id="import-csv-button" class="inline-flex items-center gap-2 rounded-md border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-600 shadow hover:bg-emerald-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600" type="button" aria-label="Import students from CSV">
-          <span>Import CSV</span>
-        </button>
-        <input id="import-csv-input" type="file" accept=".csv,text/csv" class="hidden" />
         <button id="backup-json" class="inline-flex items-center gap-2 rounded-md border border-indigo-200 bg-white px-4 py-2 text-sm font-semibold text-indigo-600 shadow hover:bg-indigo-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" type="button" aria-label="Download data backup">
           <span>Download Backup</span>
         </button>
@@ -305,21 +301,6 @@
                 </div>
                 <p class="mt-1 text-xs text-slate-400">PNG, JPG, or WebP up to 1MB.</p>
               </div>
-              <div class="rounded-lg border border-slate-200 p-4">
-                <div class="flex items-start justify-between gap-4">
-                  <div>
-                    <p class="text-sm font-semibold text-slate-600">Data Encryption</p>
-                    <p class="mt-1 text-xs text-slate-400">Protect local records with a passphrase stored only on this device.</p>
-                  </div>
-                  <span id="encryption-status" class="inline-flex items-center rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-500">Disabled</span>
-                </div>
-                <p id="encryption-unsupported" class="mt-3 hidden text-xs text-amber-600">Encryption requires a secure browser with Web Crypto support.</p>
-                <div class="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
-                  <button id="encryption-manage" type="button" class="inline-flex flex-1 items-center justify-center rounded-md border border-indigo-200 px-4 py-2 text-sm font-semibold text-indigo-600 hover:bg-indigo-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Set Passphrase</button>
-                  <button id="encryption-disable" type="button" class="hidden inline-flex items-center justify-center rounded-md border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-500">Disable</button>
-                </div>
-                <p id="encryption-hint-display" class="mt-2 hidden text-xs text-slate-400"></p>
-              </div>
               <button type="submit" class="inline-flex w-full items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Save Settings</button>
             </form>
           </div>
@@ -368,61 +349,6 @@
         <button type="button" data-role="confirm" class="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-semibold text-white shadow focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 transition bg-indigo-600 hover:bg-indigo-500 focus-visible:outline-indigo-600">Confirm</button>
       </div>
     </div>
-  </dialog>
-
-  <dialog
-    id="encryption-manage-dialog"
-    class="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-0 shadow-xl"
-    aria-labelledby="encryption-manage-title"
-  >
-    <form id="encryption-manage-form" class="space-y-6 p-6">
-      <header class="space-y-2">
-        <h2 id="encryption-manage-title" class="text-lg font-semibold text-slate-800">Set encryption passphrase</h2>
-        <p class="text-sm text-slate-600">Use at least 8 characters. You will need this passphrase to unlock data on this device.</p>
-      </header>
-      <div class="space-y-4">
-        <label class="block text-sm font-medium text-slate-600">
-          Passphrase
-          <input id="encryption-passphrase" type="password" minlength="8" autocomplete="new-password" required class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-        </label>
-        <label class="block text-sm font-medium text-slate-600">
-          Confirm passphrase
-          <input id="encryption-passphrase-confirm" type="password" minlength="8" autocomplete="new-password" required class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-        </label>
-        <label class="block text-sm font-medium text-slate-600">
-          Optional hint
-          <input id="encryption-passphrase-hint" type="text" maxlength="120" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="E.g. Favorite proverb" />
-        </label>
-      </div>
-      <p id="encryption-manage-error" class="hidden text-sm text-rose-600"></p>
-      <div class="flex justify-end gap-3">
-        <button type="button" id="encryption-manage-cancel" class="inline-flex items-center justify-center rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400">Cancel</button>
-        <button type="submit" class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Save passphrase</button>
-      </div>
-    </form>
-  </dialog>
-
-  <dialog
-    id="encryption-unlock-dialog"
-    class="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-0 shadow-xl"
-    aria-labelledby="encryption-unlock-title"
-    aria-describedby="encryption-unlock-description"
-  >
-    <form id="encryption-unlock-form" class="space-y-6 p-6">
-      <header class="space-y-2">
-        <h2 id="encryption-unlock-title" class="text-lg font-semibold text-slate-800">Unlock your classroom</h2>
-        <p id="encryption-unlock-description" class="text-sm text-slate-600">Enter the passphrase to unlock encrypted data for this device.</p>
-        <p id="encryption-unlock-hint" class="text-xs text-slate-400"></p>
-      </header>
-      <label class="block text-sm font-medium text-slate-600">
-        Passphrase
-        <input id="encryption-unlock-passphrase" type="password" autocomplete="current-password" required class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-      </label>
-      <p id="encryption-unlock-error" class="hidden text-sm text-rose-600"></p>
-      <div class="flex justify-end">
-        <button type="submit" class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Unlock</button>
-      </div>
-    </form>
   </dialog>
 
   <template id="student-row-template">
@@ -579,370 +505,6 @@
             fallbackToLocalStorage = true;
             window.localStorage.setItem(key, JSON.stringify(serialized));
           }
-        }
-      };
-    })();
-
-    const SecurityModule = (() => {
-      const META_KEY = 'zantra_classmate_security_meta_v1';
-      const supported = !!(window.crypto && window.crypto.subtle && window.TextEncoder && window.TextDecoder);
-
-      const manageDialog = document.getElementById('encryption-manage-dialog');
-      const manageForm = document.getElementById('encryption-manage-form');
-      const manageCancel = document.getElementById('encryption-manage-cancel');
-      const passField = document.getElementById('encryption-passphrase');
-      const confirmField = document.getElementById('encryption-passphrase-confirm');
-      const hintField = document.getElementById('encryption-passphrase-hint');
-      const manageError = document.getElementById('encryption-manage-error');
-
-      const unlockDialog = document.getElementById('encryption-unlock-dialog');
-      const unlockForm = document.getElementById('encryption-unlock-form');
-      const unlockPassField = document.getElementById('encryption-unlock-passphrase');
-      const unlockError = document.getElementById('encryption-unlock-error');
-      const unlockHint = document.getElementById('encryption-unlock-hint');
-
-      const encoder = supported ? new TextEncoder() : null;
-      const decoder = supported ? new TextDecoder() : null;
-
-      let metadata = readMetadata();
-      let activeKey = null;
-      let manageResolver = null;
-      let unlockResolver = null;
-      let pendingPayload = null;
-      const listeners = new Set();
-
-      function readMetadata() {
-        if (!supported) return { enabled: false };
-        try {
-          const raw = window.localStorage.getItem(META_KEY);
-          if (!raw) {
-            return { enabled: false };
-          }
-          const parsed = JSON.parse(raw);
-          if (!parsed || typeof parsed !== 'object') {
-            return { enabled: false };
-          }
-          return {
-            enabled: !!parsed.enabled,
-            salt: typeof parsed.salt === 'string' ? parsed.salt : '',
-            iterations: typeof parsed.iterations === 'number' ? parsed.iterations : 210000,
-            hint: typeof parsed.hint === 'string' ? parsed.hint : '',
-            version: parsed.version || 1
-          };
-        } catch (error) {
-          console.warn('Failed to load encryption metadata.', error);
-          return { enabled: false };
-        }
-      }
-
-      function writeMetadata(next) {
-        try {
-          window.localStorage.setItem(META_KEY, JSON.stringify(next));
-        } catch (error) {
-          console.warn('Failed to persist encryption metadata.', error);
-        }
-      }
-
-      function clearMetadata() {
-        try {
-          window.localStorage.removeItem(META_KEY);
-        } catch (error) {
-          console.warn('Failed to clear encryption metadata.', error);
-        }
-      }
-
-      const bufferToBase64 = (buffer) => {
-        const bytes = new Uint8Array(buffer);
-        let binary = '';
-        for (let index = 0; index < bytes.length; index += 1) {
-          binary += String.fromCharCode(bytes[index]);
-        }
-        return window.btoa(binary);
-      };
-
-      const base64ToUint8 = (value) => {
-        const binary = window.atob(value);
-        const bytes = new Uint8Array(binary.length);
-        for (let index = 0; index < binary.length; index += 1) {
-          bytes[index] = binary.charCodeAt(index);
-        }
-        return bytes;
-      };
-
-      const deriveKey = (passphrase, saltBytes, iterations) =>
-        window.crypto.subtle
-          .importKey('raw', encoder.encode(passphrase), 'PBKDF2', false, ['deriveKey'])
-          .then((baseKey) =>
-            window.crypto.subtle.deriveKey(
-              { name: 'PBKDF2', salt: saltBytes, iterations, hash: 'SHA-256' },
-              baseKey,
-              { name: 'AES-GCM', length: 256 },
-              false,
-              ['encrypt', 'decrypt']
-            )
-          );
-
-      const openDialog = (dialog) => {
-        if (typeof dialog.showModal === 'function') {
-          dialog.showModal();
-        } else {
-          dialog.setAttribute('open', 'true');
-        }
-      };
-
-      const closeDialog = (dialog) => {
-        if (typeof dialog.close === 'function') {
-          dialog.close();
-        } else {
-          dialog.removeAttribute('open');
-        }
-      };
-
-      const getStatus = () => ({
-        supported,
-        enabled: supported && !!(metadata && metadata.enabled),
-        hint: metadata && metadata.hint ? metadata.hint : '',
-        locked: supported && !!(metadata && metadata.enabled) && !activeKey
-      });
-
-      const emit = (options = {}) => {
-        const status = getStatus();
-        listeners.forEach((callback) => {
-          try {
-            callback(status, options);
-          } catch (error) {
-            console.error('Encryption listener error.', error);
-          }
-        });
-      };
-
-      const finishManage = () => {
-        closeDialog(manageDialog);
-        if (manageResolver) {
-          const { resolve, changed } = manageResolver;
-          manageResolver = null;
-          resolve(changed);
-        }
-      };
-
-      const finishUnlock = (payload) => {
-        closeDialog(unlockDialog);
-        if (unlockResolver) {
-          const { resolve } = unlockResolver;
-          unlockResolver = null;
-          pendingPayload = null;
-          emit();
-          resolve(payload);
-        }
-      };
-
-      const decryptWithKey = async (payload, key) => {
-        if (!supported) {
-          throw new Error('Encryption not supported.');
-        }
-        if (!payload || !payload.__encrypted) {
-          return payload;
-        }
-        const ivBytes = base64ToUint8(payload.iv);
-        const dataBytes = base64ToUint8(payload.data);
-        const decrypted = await window.crypto.subtle.decrypt(
-          { name: 'AES-GCM', iv: ivBytes },
-          key,
-          dataBytes
-        );
-        return JSON.parse(decoder.decode(decrypted));
-      };
-
-      const waitForUnlock = (payload) =>
-        new Promise((resolve, reject) => {
-          pendingPayload = payload;
-          unlockResolver = { resolve, reject };
-          unlockError.classList.add('hidden');
-          unlockError.textContent = '';
-          unlockPassField.value = '';
-          unlockHint.textContent = metadata && metadata.hint ? `Hint: ${metadata.hint}` : '';
-          emit();
-          openDialog(unlockDialog);
-          setTimeout(() => {
-            unlockPassField.focus();
-          }, 50);
-        });
-
-      const setPassphrase = async (passphrase, hint) => {
-        if (!supported) {
-          throw new Error('Encryption is not supported in this browser.');
-        }
-        const saltBytes = window.crypto.getRandomValues(new Uint8Array(16));
-        const iterations = 210000;
-        const key = await deriveKey(passphrase, saltBytes, iterations);
-        activeKey = key;
-        metadata = {
-          enabled: true,
-          salt: bufferToBase64(saltBytes.buffer),
-          iterations,
-          hint: hint || '',
-          version: 1
-        };
-        writeMetadata(metadata);
-        emit({ requirePersist: true });
-      };
-
-      const handleManageSubmit = async (event) => {
-        event.preventDefault();
-        if (!manageResolver) return;
-        const passphrase = passField.value.trim();
-        const confirm = confirmField.value.trim();
-        const hint = hintField.value.trim();
-        manageError.classList.add('hidden');
-        manageError.textContent = '';
-        if (!supported) {
-          manageError.textContent = 'Encryption is unavailable in this browser.';
-          manageError.classList.remove('hidden');
-          return;
-        }
-        if (passphrase.length < 8) {
-          manageError.textContent = 'Use at least 8 characters for the passphrase.';
-          manageError.classList.remove('hidden');
-          return;
-        }
-        if (passphrase !== confirm) {
-          manageError.textContent = 'Passphrases do not match. Please try again.';
-          manageError.classList.remove('hidden');
-          return;
-        }
-        try {
-          await setPassphrase(passphrase, hint);
-          manageResolver.changed = true;
-          finishManage();
-        } catch (error) {
-          manageError.textContent = error.message || 'Unable to store passphrase. Try again.';
-          manageError.classList.remove('hidden');
-        }
-      };
-
-      const handleUnlockSubmit = async (event) => {
-        event.preventDefault();
-        if (!unlockResolver) return;
-        const passphrase = unlockPassField.value.trim();
-        unlockError.classList.add('hidden');
-        unlockError.textContent = '';
-        try {
-          const saltBytes = base64ToUint8(metadata.salt);
-          const iterations = metadata.iterations || 210000;
-          const key = await deriveKey(passphrase, saltBytes, iterations);
-          const decrypted = await decryptWithKey(pendingPayload, key);
-          activeKey = key;
-          finishUnlock(decrypted);
-        } catch (error) {
-          unlockError.textContent = 'Incorrect passphrase. Please try again.';
-          unlockError.classList.remove('hidden');
-          unlockPassField.focus();
-          unlockPassField.select();
-        }
-      };
-
-      if (manageForm) {
-        manageForm.addEventListener('submit', handleManageSubmit);
-      }
-
-      if (manageCancel) {
-        manageCancel.addEventListener('click', () => {
-          finishManage();
-        });
-      }
-
-      if (manageDialog) {
-        manageDialog.addEventListener('cancel', (event) => {
-          event.preventDefault();
-          finishManage();
-        });
-      }
-
-      if (unlockForm) {
-        unlockForm.addEventListener('submit', handleUnlockSubmit);
-      }
-
-      if (unlockDialog) {
-        unlockDialog.addEventListener('cancel', (event) => {
-          event.preventDefault();
-        });
-      }
-
-      return {
-        isSupported: () => supported,
-        isEnabled: () => supported && !!(metadata && metadata.enabled),
-        isLocked: () => supported && !!(metadata && metadata.enabled) && !activeKey,
-        hasActiveKey: () => !!activeKey,
-        getStatus,
-        subscribe(callback) {
-          listeners.add(callback);
-          callback(getStatus(), { requirePersist: false });
-          return () => listeners.delete(callback);
-        },
-        openManageDialog() {
-          if (!supported) {
-            return Promise.resolve(false);
-          }
-          if (manageResolver) {
-            return Promise.resolve(false);
-          }
-          return new Promise((resolve) => {
-            manageResolver = { resolve, changed: false };
-            manageForm.reset();
-            passField.value = '';
-            confirmField.value = '';
-            hintField.value = metadata && metadata.hint ? metadata.hint : '';
-            manageError.classList.add('hidden');
-            manageError.textContent = '';
-            openDialog(manageDialog);
-            setTimeout(() => {
-              passField.focus();
-            }, 50);
-          });
-        },
-        async disableEncryption() {
-          if (!supported || !metadata.enabled) {
-            return false;
-          }
-          metadata = { enabled: false };
-          activeKey = null;
-          clearMetadata();
-          emit({ requirePersist: true });
-          return true;
-        },
-        async encryptState(state) {
-          if (!supported || !metadata.enabled) {
-            return state;
-          }
-          if (!activeKey) {
-            throw new Error('Encryption key is locked. Unlock before saving.');
-          }
-          const iv = window.crypto.getRandomValues(new Uint8Array(12));
-          const serialized = encoder.encode(JSON.stringify(state));
-          const cipher = await window.crypto.subtle.encrypt({ name: 'AES-GCM', iv }, activeKey, serialized);
-          return {
-            __encrypted: true,
-            version: 1,
-            iv: bufferToBase64(iv.buffer),
-            data: bufferToBase64(cipher)
-          };
-        },
-        async unlockEncryptedState(payload) {
-          if (!supported) {
-            throw new Error('Encryption is unavailable in this browser.');
-          }
-          if (!payload || !payload.__encrypted) {
-            return payload;
-          }
-          if (activeKey) {
-            try {
-              return await decryptWithKey(payload, activeKey);
-            } catch (error) {
-              console.warn('Stored encryption key failed to decrypt state. Re-authenticating.', error);
-              activeKey = null;
-            }
-          }
-          return waitForUnlock(payload);
         }
       };
     })();
@@ -1129,24 +691,12 @@
         return base;
       };
 
-      const persist = async () => {
-        if (!state) return;
+      const persist = () => {
+        if (!state) return Promise.resolve();
         state.settings.lastUpdated = new Date().toISOString();
-        const snapshot = clone(state);
-        let payload = snapshot;
-        if (SecurityModule.isEnabled()) {
-          try {
-            payload = await SecurityModule.encryptState(snapshot);
-          } catch (error) {
-            console.error('Failed to encrypt application state. Saving unencrypted copy.', error);
-            payload = snapshot;
-          }
-        }
-        try {
-          await StorageLayer.save(STORAGE_KEY, payload);
-        } catch (error) {
+        return StorageLayer.save(STORAGE_KEY, state).catch((error) => {
           console.error('Failed to persist application state.', error);
-        }
+        });
       };
 
       const getSnapshot = () => (state ? clone(state) : clone(defaultState));
@@ -1163,19 +713,13 @@
 
       return {
         async init() {
-          let rawState = null;
           try {
-            rawState = await StorageLayer.load(STORAGE_KEY);
-            if (rawState && rawState.__encrypted) {
-              rawState = await SecurityModule.unlockEncryptedState(rawState);
-            }
+            const rawState = await StorageLayer.load(STORAGE_KEY);
             state = normalizeState(rawState);
           } catch (error) {
             console.warn('Failed to load stored data, resetting state.', error);
             state = clone(defaultState);
-            if (!rawState || !rawState.__encrypted) {
-              await persist();
-            }
+            await persist();
           }
           notify('state');
           notify('classes');
@@ -1183,9 +727,6 @@
           notify('attendance');
           notify('notes');
           notify('settings');
-        },
-        async persistState() {
-          await persist();
         },
         subscribe(domain, callback) {
           if (!subscribers[domain]) {
@@ -1482,6 +1023,79 @@
         }
       };
     })();
+    const ConfirmDialog = (() => {
+      const dialog = document.getElementById('confirm-dialog');
+      const titleNode = dialog.querySelector('[data-role="title"]');
+      const messageNode = dialog.querySelector('[data-role="message"]');
+      const confirmButton = dialog.querySelector('[data-role="confirm"]');
+      const cancelButton = dialog.querySelector('[data-role="cancel"]');
+
+      const TONE_STYLES = {
+        primary: ['bg-indigo-600', 'hover:bg-indigo-500', 'focus-visible:outline-indigo-600'],
+        danger: ['bg-rose-600', 'hover:bg-rose-500', 'focus-visible:outline-rose-600']
+      };
+      const toneClassSet = new Set(Object.values(TONE_STYLES).flat());
+      const confirmBaseClasses = Array.from(confirmButton.classList).filter(
+        (className) => !toneClassSet.has(className)
+      );
+      const cancelBaseClasses = Array.from(cancelButton.classList);
+
+      let resolver = null;
+
+      const openDialog = () => {
+        if (typeof dialog.showModal === 'function') {
+          dialog.showModal();
+        } else {
+          dialog.setAttribute('open', 'true');
+        }
+      };
+
+      const closeDialog = () => {
+        if (typeof dialog.close === 'function') {
+          dialog.close();
+        } else {
+          dialog.removeAttribute('open');
+        }
+      };
+
+      const resolveWith = (value) => {
+        if (!resolver) return;
+        const resolve = resolver;
+        resolver = null;
+        closeDialog();
+        resolve(value);
+      };
+
+      const applyTone = (tone) => {
+        confirmButton.className = '';
+        confirmButton.classList.add(...confirmBaseClasses);
+        const toneClasses = TONE_STYLES[tone] || TONE_STYLES.primary;
+        confirmButton.classList.add(...toneClasses);
+      };
+
+      const resetButtons = () => {
+        cancelButton.className = '';
+        cancelButton.classList.add(...cancelBaseClasses);
+      };
+
+      confirmButton.addEventListener('click', () => {
+        resolveWith(true);
+      });
+
+      cancelButton.addEventListener('click', () => {
+        resolveWith(false);
+      });
+
+      dialog.addEventListener('cancel', (event) => {
+        event.preventDefault();
+        resolveWith(false);
+      });
+
+      dialog.addEventListener('click', (event) => {
+        if (event.target === dialog) {
+          resolveWith(false);
+        }
+      });
 
     const Toast = (() => {
       const region = document.getElementById('toast-region');
@@ -1672,6 +1286,122 @@
         }
         buttons[nextIndex].focus();
         buttons[nextIndex].click();
+      };
+
+      return {
+        init() {
+          document.querySelectorAll('.tab-button').forEach((button, index) => {
+            buttons.push(button);
+            button.setAttribute('role', 'tab');
+            button.setAttribute('tabindex', index === 0 ? '0' : '-1');
+            button.addEventListener('click', () => {
+              buttons.forEach((btn) => btn.setAttribute('tabindex', '-1'));
+              button.setAttribute('tabindex', '0');
+              switchTo(button.dataset.target);
+            });
+            button.addEventListener('keydown', handleKeyNavigation);
+          });
+          switchTo(activeTab);
+        }
+      };
+    })();
+
+    const ClassModule = (() => {
+      const selector = document.getElementById('class-selector');
+      const manageButton = document.getElementById('manage-classes');
+      const dialog = document.getElementById('class-manager-dialog');
+      const closeButton = document.getElementById('class-manager-close');
+      const form = document.getElementById('class-form');
+      const nameField = document.getElementById('class-name');
+      const list = document.getElementById('class-list');
+      const template = document.getElementById('class-row-template');
+
+      const getStudentCount = (classId) => ZantraCore.getStudents(true).filter((student) => student.classId === classId).length;
+      const getAttendanceCount = (classId) => ZantraCore.getSnapshot().attendanceRecords.filter((record) => record.classId === classId).length;
+      const getNoteCount = (classId) => ZantraCore.getSnapshot().notes.filter((note) => note.classId === classId).length;
+
+      const renderSelector = () => {
+        const classes = ZantraCore.getClasses();
+        const activeClassId = ZantraCore.getActiveClassId();
+        selector.innerHTML = '';
+        classes.forEach((cls) => {
+          const option = document.createElement('option');
+          option.value = cls.id;
+          option.textContent = cls.name;
+          if (cls.id === activeClassId) {
+            option.selected = true;
+          }
+          selector.appendChild(option);
+        });
+      };
+
+      const renderList = () => {
+        const classes = ZantraCore.getClasses();
+        const activeClassId = ZantraCore.getActiveClassId();
+        list.innerHTML = '';
+        classes.forEach((cls) => {
+          const item = template.content.cloneNode(true);
+          const li = item.firstElementChild;
+          const input = li.querySelector('.class-name-input');
+          const studentBadge = li.querySelector('[data-role="student-count"]');
+          const activeBadge = li.querySelector('[data-role="active-badge"]');
+          const saveButton = li.querySelector('[data-action="save"]');
+          const deleteButton = li.querySelector('[data-action="delete"]');
+
+          input.value = cls.name;
+          input.dataset.classId = cls.id;
+          studentBadge.textContent = `${getStudentCount(cls.id)} students`;
+          if (cls.id === activeClassId) {
+            activeBadge.classList.remove('hidden');
+            li.classList.add('border-indigo-200');
+          }
+          const canDelete =
+            classes.length > 1 &&
+            cls.id !== activeClassId &&
+            getStudentCount(cls.id) === 0 &&
+            getAttendanceCount(cls.id) === 0 &&
+            getNoteCount(cls.id) === 0;
+          deleteButton.disabled = !canDelete;
+          deleteButton.classList.toggle('opacity-40', !canDelete);
+          deleteButton.classList.toggle('cursor-not-allowed', !canDelete);
+
+          saveButton.addEventListener('click', () => {
+            try {
+              ZantraCore.renameClass(cls.id, input.value);
+              Toast.success('Class updated successfully.');
+            } catch (error) {
+              Toast.error(error.message);
+            }
+          });
+
+          deleteButton.addEventListener('click', () => {
+            try {
+              ZantraCore.deleteClass(cls.id);
+              Toast.success('Class deleted.');
+            } catch (error) {
+              Toast.error(error.message);
+            }
+          });
+
+          list.appendChild(item);
+        });
+      };
+
+      const openDialog = () => {
+        renderList();
+        if (typeof dialog.showModal === 'function') {
+          dialog.showModal();
+        } else {
+          dialog.setAttribute('open', 'true');
+        }
+      };
+
+      const closeDialog = () => {
+        if (typeof dialog.close === 'function') {
+          dialog.close();
+        } else {
+          dialog.removeAttribute('open');
+        }
       };
 
       return {
@@ -2013,18 +1743,18 @@
             <span>${student.name}</span>
             <span class="text-xs text-slate-400">${student.grade || ''}</span>
           </legend>
-          <div class="mt-3 grid grid-cols-1 gap-2 text-sm sm:grid-cols-3 sm:text-sm">
+          <div class="mt-3 grid grid-cols-3 gap-2 text-xs sm:text-sm">
             <label class="flex">
               <input type="radio" name="att-${student.id}" value="Present" class="peer sr-only" checked />
-              <span class="flex w-full items-center justify-center rounded-md border border-emerald-200 px-4 py-3 text-base font-semibold text-emerald-600 transition peer-checked:bg-emerald-500 peer-checked:text-white">Present</span>
+              <span class="flex w-full items-center justify-center rounded-md border border-emerald-200 px-3 py-2 font-semibold text-emerald-600 transition peer-checked:bg-emerald-500 peer-checked:text-white">Present</span>
             </label>
             <label class="flex">
               <input type="radio" name="att-${student.id}" value="Late" class="peer sr-only" />
-              <span class="flex w-full items-center justify-center rounded-md border border-amber-200 px-4 py-3 text-base font-semibold text-amber-600 transition peer-checked:bg-amber-500 peer-checked:text-white">Late</span>
+              <span class="flex w-full items-center justify-center rounded-md border border-amber-200 px-3 py-2 font-semibold text-amber-600 transition peer-checked:bg-amber-500 peer-checked:text-white">Late</span>
             </label>
             <label class="flex">
               <input type="radio" name="att-${student.id}" value="Absent" class="peer sr-only" />
-              <span class="flex w-full items-center justify-center rounded-md border border-rose-200 px-4 py-3 text-base font-semibold text-rose-600 transition peer-checked:bg-rose-500 peer-checked:text-white">Absent</span>
+              <span class="flex w-full items-center justify-center rounded-md border border-rose-200 px-3 py-2 font-semibold text-rose-600 transition peer-checked:bg-rose-500 peer-checked:text-white">Absent</span>
             </label>
           </div>
           <label class="mt-3 block text-xs font-medium text-slate-500">
@@ -2480,11 +2210,6 @@
       const appTitle = document.getElementById('app-title');
       const appSubtitle = document.getElementById('app-subtitle');
       const appLogo = document.getElementById('app-logo');
-      const encryptionStatus = document.getElementById('encryption-status');
-      const encryptionUnsupported = document.getElementById('encryption-unsupported');
-      const encryptionManageButton = document.getElementById('encryption-manage');
-      const encryptionDisableButton = document.getElementById('encryption-disable');
-      const encryptionHintDisplay = document.getElementById('encryption-hint-display');
 
       let currentLogo = '';
 
@@ -2651,274 +2376,8 @@
           });
           logoInput.addEventListener('change', handleLogoChange);
           logoRemove.addEventListener('click', handleLogoRemove);
-          encryptionManageButton.addEventListener('click', handleManageEncryption);
-          encryptionDisableButton.addEventListener('click', handleDisableEncryption);
-          SecurityModule.subscribe((status, meta) => {
-            updateEncryptionUi(status);
-            if (meta && meta.requirePersist) {
-              ZantraCore.persistState();
-            }
-          });
-          updateEncryptionUi(SecurityModule.getStatus());
           ZantraCore.subscribe('settings', syncSettings);
           populateForm();
-        }
-      };
-    })();
-    const CsvImportModule = (() => {
-      const button = document.getElementById('import-csv-button');
-      const input = document.getElementById('import-csv-input');
-      const fileApiSupported = typeof FileReader !== 'undefined';
-
-      const normalizeHeader = (header) => header.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-
-      const parseCsv = (content) => {
-        const rows = [];
-        let current = '';
-        let row = [];
-        let inQuotes = false;
-        for (let index = 0; index < content.length; index += 1) {
-          const char = content[index];
-          if (char === '"') {
-            const nextChar = content[index + 1];
-            if (inQuotes && nextChar === '"') {
-              current += '"';
-              index += 1;
-            } else {
-              inQuotes = !inQuotes;
-            }
-            continue;
-          }
-          if (char === ',' && !inQuotes) {
-            row.push(current);
-            current = '';
-            continue;
-          }
-          if ((char === '\n' || char === '\r') && !inQuotes) {
-            if (char === '\r' && content[index + 1] === '\n') {
-              index += 1;
-            }
-            row.push(current);
-            if (row.some((cell) => cell.trim().length)) {
-              rows.push(row);
-            }
-            row = [];
-            current = '';
-            continue;
-          }
-          current += char;
-        }
-        if (current.length || row.length) {
-          row.push(current);
-          if (row.some((cell) => cell.trim().length)) {
-            rows.push(row);
-          }
-        }
-        return rows;
-      };
-
-      const readFile = (file) =>
-        new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
-          reader.onerror = () => reject(new Error('Unable to read the selected file.'));
-          reader.readAsText(file);
-        });
-
-      const sanitizeContact = (value) => value.replace(/[^0-9+()\-\s]/g, '').trim();
-
-      const buildHeaderIndex = (headers) => {
-        const lookup = headers.map((header) => normalizeHeader(header));
-        const find = (...candidates) => {
-          for (let i = 0; i < candidates.length; i += 1) {
-            const candidate = candidates[i];
-            const index = lookup.indexOf(candidate);
-            if (index >= 0) return index;
-          }
-          return -1;
-        };
-        return {
-          studentId: find('student id', 'studentid', 'id'),
-          name: find('name', 'full name'),
-          grade: find('grade', 'level', 'class level'),
-          email: find('email', 'email address'),
-          guardian: find('guardian contact', 'parent contact', 'contact'),
-          dob: find('dob', 'date of birth', 'birthdate'),
-          notes: find('notes', 'support notes', 'comment', 'comments'),
-          className: find('class', 'class name', 'section')
-        };
-      };
-
-      const ensureClass = (name, cache) => {
-        if (!name) return ZantraCore.getActiveClassId();
-        const trimmed = name.trim();
-        if (!trimmed) return ZantraCore.getActiveClassId();
-        const normalized = trimmed.toLowerCase();
-        if (cache.has(normalized)) {
-          return cache.get(normalized).id;
-        }
-        const created = ZantraCore.createClass(trimmed);
-        cache.set(created.name.toLowerCase(), created);
-        return created.id;
-      };
-
-      const handleImport = async (file) => {
-        let raw = '';
-        try {
-          raw = await readFile(file);
-        } catch (error) {
-          Toast.error(error.message);
-          return;
-        }
-        if (!raw.trim()) {
-          Toast.info('The selected CSV file is empty.');
-          return;
-        }
-        if (raw.charCodeAt(0) === 0xfeff) {
-          raw = raw.slice(1);
-        }
-        const rows = parseCsv(raw);
-        if (!rows.length) {
-          Toast.info('No rows detected in the CSV file.');
-          return;
-        }
-        const header = rows[0].map((cell) => cell.trim());
-        const indices = buildHeaderIndex(header);
-        if (indices.studentId < 0 || indices.name < 0) {
-          Toast.error('CSV must include headers for Student ID and Name.');
-          return;
-        }
-        const dataRows = rows.slice(1);
-        if (!dataRows.length) {
-          Toast.info('No student records found after the header row.');
-          return;
-        }
-
-        const classes = ZantraCore.getClasses();
-        const classCache = new Map(classes.map((cls) => [cls.name.toLowerCase(), cls]));
-        const activeClassId = ZantraCore.getActiveClassId();
-        const existingStudents = ZantraCore.getStudents(true);
-        const existingMap = new Map();
-        existingStudents.forEach((student) => {
-          if (!existingMap.has(student.classId)) {
-            existingMap.set(student.classId, new Map());
-          }
-          existingMap.get(student.classId).set(student.studentId.toLowerCase(), student);
-        });
-
-        const pick = (row, index) => (index >= 0 && row[index] != null ? row[index].trim() : '');
-        const seen = new Set();
-        const createdClasses = new Set();
-        const report = { created: 0, updated: 0, skipped: 0, errors: [] };
-
-        dataRows.forEach((row, rowIndex) => {
-          if (!row.some((cell) => cell && cell.trim())) {
-            return;
-          }
-          const lineNumber = rowIndex + 2;
-          const studentId = pick(row, indices.studentId);
-          const name = pick(row, indices.name);
-          if (!studentId || !name) {
-            report.skipped += 1;
-            report.errors.push({ row: lineNumber, message: 'Missing student ID or name.' });
-            return;
-          }
-
-          let classId = activeClassId;
-          const className = pick(row, indices.className);
-          if (className) {
-            const normalized = className.trim().toLowerCase();
-            if (classCache.has(normalized)) {
-              classId = classCache.get(normalized).id;
-            } else {
-              try {
-                classId = ensureClass(className, classCache);
-                createdClasses.add(className.trim());
-              } catch (error) {
-                report.skipped += 1;
-                report.errors.push({ row: lineNumber, message: error.message || 'Unable to create class for this row.' });
-                return;
-              }
-            }
-          }
-
-          const key = `${classId}:${studentId.toLowerCase()}`;
-          if (seen.has(key)) {
-            report.skipped += 1;
-            report.errors.push({ row: lineNumber, message: 'Duplicate student ID in the CSV file.' });
-            return;
-          }
-          seen.add(key);
-
-          if (!existingMap.has(classId)) {
-            existingMap.set(classId, new Map());
-          }
-          const classStudents = existingMap.get(classId);
-          const existing = classStudents.get(studentId.toLowerCase());
-
-          const payload = {
-            id: existing ? existing.id : undefined,
-            classId,
-            studentId,
-            name,
-            grade: pick(row, indices.grade),
-            email: pick(row, indices.email),
-            guardianContact: sanitizeContact(pick(row, indices.guardian)),
-            dob: pick(row, indices.dob),
-            notes: pick(row, indices.notes)
-          };
-
-          try {
-            const saved = ZantraCore.saveStudent(payload);
-            classStudents.set(studentId.toLowerCase(), saved);
-            if (existing) {
-              report.updated += 1;
-            } else {
-              report.created += 1;
-            }
-          } catch (error) {
-            report.skipped += 1;
-            report.errors.push({ row: lineNumber, message: error.message || 'Unable to save this student.' });
-          }
-        });
-
-        const totalProcessed = report.created + report.updated;
-        if (totalProcessed) {
-          Toast.success(
-            `Imported ${report.created} new and ${report.updated} updated student${totalProcessed === 1 ? '' : 's'}.`
-          );
-        } else if (!report.errors.length) {
-          Toast.info('No student records were imported from the CSV file.');
-        }
-        if (createdClasses.size) {
-          const names = Array.from(createdClasses).join(', ');
-          Toast.info(`Created ${createdClasses.size} new class${createdClasses.size === 1 ? '' : 'es'}: ${names}`);
-        }
-        if (report.errors.length) {
-          Toast.error(
-            `CSV import completed with ${report.errors.length} issue${report.errors.length === 1 ? '' : 's'}. Check console for details.`
-          );
-          console.warn('CSV import issues', report.errors);
-        }
-      };
-
-      return {
-        init() {
-          if (!button || !input) return;
-          if (!fileApiSupported) {
-            button.disabled = true;
-            button.classList.add('cursor-not-allowed', 'opacity-50');
-            button.setAttribute('aria-disabled', 'true');
-            button.title = 'CSV import is not supported in this browser.';
-            return;
-          }
-          button.addEventListener('click', () => input.click());
-          input.addEventListener('change', async (event) => {
-            const file = event.target.files && event.target.files[0];
-            if (!file) return;
-            await handleImport(file);
-            input.value = '';
-          });
         }
       };
     })();
