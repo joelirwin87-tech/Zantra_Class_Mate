@@ -7,17 +7,40 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/idb@7/build/iife/index-min.js"></script>
+  <style>
+    dialog::backdrop {
+      background-color: rgba(15, 23, 42, 0.4);
+    }
+  </style>
 </head>
 <body class="min-h-screen bg-slate-100 text-slate-900">
   <div class="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
-    <header class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div>
-        <h1 id="app-title" class="text-3xl font-bold text-slate-800">Zantra Classmate</h1>
-        <p id="app-subtitle" class="text-slate-500">Empowering classrooms with organized insights.</p>
+    <header class="flex flex-col gap-6 border-b border-slate-200 pb-6">
+      <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div class="flex items-start gap-4">
+          <img id="app-logo" src="" alt="School logo" class="hidden h-16 w-16 rounded-lg border border-slate-200 object-cover" />
+          <div>
+            <h1 id="app-title" class="text-3xl font-bold text-slate-800">Zantra Classmate</h1>
+            <p id="app-subtitle" class="text-slate-500">Empowering classrooms with organized insights.</p>
+          </div>
+        </div>
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div class="flex items-center gap-3">
+            <label for="class-selector" class="text-sm font-semibold text-slate-600">Active class</label>
+            <select id="class-selector" class="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
+          </div>
+          <button id="manage-classes" type="button" class="inline-flex items-center justify-center rounded-md border border-indigo-200 bg-white px-4 py-2 text-sm font-semibold text-indigo-600 shadow-sm hover:bg-indigo-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+            Manage Classes
+          </button>
+        </div>
       </div>
-      <div class="flex gap-2">
+      <div class="flex flex-wrap gap-2">
         <button id="export-pdf" class="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" type="button" aria-label="Export reports as PDF">
           <span>Export PDF</span>
+        </button>
+        <button id="export-csv" class="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-emerald-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600" type="button" aria-label="Export data as CSV">
+          <span>Export CSV</span>
         </button>
         <button id="backup-json" class="inline-flex items-center gap-2 rounded-md border border-indigo-200 bg-white px-4 py-2 text-sm font-semibold text-indigo-600 shadow hover:bg-indigo-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" type="button" aria-label="Download data backup">
           <span>Download Backup</span>
@@ -45,6 +68,10 @@
           <div class="rounded-xl bg-white p-6 shadow">
             <h2 class="text-lg font-semibold text-slate-700">Class Snapshot</h2>
             <dl class="mt-4 grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <dt class="text-slate-500">Active Class</dt>
+                <dd id="overview-active-class" class="text-base font-semibold text-slate-700">--</dd>
+              </div>
               <div>
                 <dt class="text-slate-500">Total Students</dt>
                 <dd id="overview-total-students" class="text-2xl font-bold text-slate-800">0</dd>
@@ -77,25 +104,43 @@
         <div class="grid gap-6 lg:grid-cols-3">
           <div class="rounded-xl bg-white p-6 shadow lg:col-span-1">
             <h2 class="text-lg font-semibold text-slate-700">Student Profile</h2>
-            <form id="student-form" class="mt-4 space-y-4" autocomplete="off">
+            <form id="student-form" class="mt-4 space-y-4" autocomplete="off" novalidate>
               <input type="hidden" id="student-id" />
-              <div>
-                <label for="student-name" class="block text-sm font-medium text-slate-600">Full Name</label>
-                <input id="student-name" type="text" required class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g. Amina Yusuf" />
-              </div>
-              <div>
-                <label for="student-grade" class="block text-sm font-medium text-slate-600">Grade / Level</label>
-                <input id="student-grade" type="text" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g. Grade 7" />
+              <div class="grid gap-4 sm:grid-cols-2">
+                <div class="sm:col-span-2">
+                  <label for="student-class" class="block text-sm font-medium text-slate-600">Class</label>
+                  <select id="student-class" required class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
+                </div>
+                <div>
+                  <label for="student-code" class="block text-sm font-medium text-slate-600">Student ID</label>
+                  <input id="student-code" type="text" required maxlength="40" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g. STU-001" />
+                </div>
+                <div>
+                  <label for="student-name" class="block text-sm font-medium text-slate-600">Full Name</label>
+                  <input id="student-name" type="text" required class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g. Amina Yusuf" />
+                </div>
+                <div>
+                  <label for="student-grade" class="block text-sm font-medium text-slate-600">Grade / Level</label>
+                  <input id="student-grade" type="text" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g. Grade 7" />
+                </div>
+                <div>
+                  <label for="student-dob" class="block text-sm font-medium text-slate-600">Date of Birth</label>
+                  <input id="student-dob" type="date" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                </div>
+                <div>
+                  <label for="student-email" class="block text-sm font-medium text-slate-600">Email</label>
+                  <input id="student-email" type="email" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g. amina@example.com" />
+                </div>
               </div>
               <div>
                 <label for="student-contact" class="block text-sm font-medium text-slate-600">Guardian Contact</label>
-                <input id="student-contact" type="text" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g. +234 800 123 4567" />
+                <input id="student-contact" type="tel" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g. +234 800 123 4567" />
               </div>
               <div>
                 <label for="student-notes" class="block text-sm font-medium text-slate-600">Support Notes</label>
                 <textarea id="student-notes" rows="3" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Learning preferences, health, etc."></textarea>
               </div>
-              <div class="flex items-center gap-2">
+              <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <button id="student-submit" type="submit" class="inline-flex flex-1 items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Save Student</button>
                 <button id="student-reset" type="button" class="inline-flex items-center justify-center rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Clear</button>
               </div>
@@ -104,15 +149,18 @@
           <div class="rounded-xl bg-white p-6 shadow lg:col-span-2">
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <h2 class="text-lg font-semibold text-slate-700">Student Directory</h2>
-              <input id="student-search" type="search" placeholder="Search students" class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:w-64" aria-label="Search students" />
+              <input id="student-search" type="search" placeholder="Search students" class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 sm:w-72" aria-label="Search students" />
             </div>
             <div class="mt-4 overflow-x-auto">
               <table class="min-w-full divide-y divide-slate-200 text-sm">
                 <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                   <tr>
+                    <th scope="col" class="px-4 py-3">Student ID</th>
                     <th scope="col" class="px-4 py-3">Name</th>
                     <th scope="col" class="px-4 py-3">Grade</th>
+                    <th scope="col" class="px-4 py-3">Email</th>
                     <th scope="col" class="px-4 py-3">Guardian Contact</th>
+                    <th scope="col" class="px-4 py-3">DOB</th>
                     <th scope="col" class="px-4 py-3">Notes</th>
                     <th scope="col" class="px-4 py-3 text-right">Actions</th>
                   </tr>
@@ -124,7 +172,6 @@
           </div>
         </div>
       </section>
-
       <section id="attendance-section" class="tab-section hidden" aria-labelledby="attendance-tab">
         <div class="grid gap-6 lg:grid-cols-2">
           <div class="rounded-xl bg-white p-6 shadow">
@@ -243,6 +290,17 @@
                 <label for="setting-brand" class="block text-sm font-medium text-slate-600">Brand Accent Color</label>
                 <input id="setting-brand" type="color" class="mt-1 h-10 w-full rounded-md border border-slate-300" />
               </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-600" for="setting-logo">School Logo</label>
+                <div class="mt-1 flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <img id="settings-logo-preview" alt="Logo preview" class="hidden h-12 w-12 rounded-md border border-slate-200 object-cover" />
+                  <div class="flex items-center gap-2">
+                    <input id="setting-logo" type="file" accept="image/png,image/jpeg,image/webp" class="block w-full text-sm text-slate-600 file:mr-4 file:rounded-md file:border-0 file:bg-indigo-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-indigo-600 hover:file:bg-indigo-100" />
+                    <button id="setting-logo-remove" type="button" class="hidden rounded-md border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-500">Remove</button>
+                  </div>
+                </div>
+                <p class="mt-1 text-xs text-slate-400">PNG, JPG, or WebP up to 1MB.</p>
+              </div>
               <button type="submit" class="inline-flex w-full items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Save Settings</button>
             </form>
           </div>
@@ -250,13 +308,58 @@
       </section>
     </main>
   </div>
+  <dialog id="class-manager-dialog" class="w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-0 shadow-xl">
+    <div class="flex flex-col divide-y divide-slate-200">
+      <header class="flex items-center justify-between px-6 py-4">
+        <div>
+          <h2 class="text-lg font-semibold text-slate-800">Manage Classes</h2>
+          <p class="text-sm text-slate-500">Organize multiple classrooms for the same teacher account.</p>
+        </div>
+        <button id="class-manager-close" type="button" class="rounded-md border border-slate-200 p-2 text-slate-500 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" aria-label="Close class manager">
+          ✕
+        </button>
+      </header>
+      <div class="space-y-6 px-6 py-6">
+        <form id="class-form" class="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div class="flex-1">
+            <label for="class-name" class="block text-sm font-medium text-slate-600">Class name</label>
+            <input id="class-name" type="text" required class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g. Year 9 Science" />
+          </div>
+          <button type="submit" class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Add Class</button>
+        </form>
+        <ul id="class-list" class="space-y-4"></ul>
+        <p class="text-xs text-slate-400">Classes with enrolled students or recorded sessions must be emptied before they can be deleted.</p>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog
+    id="confirm-dialog"
+    class="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-0 shadow-xl"
+    aria-labelledby="confirm-dialog-title"
+    aria-describedby="confirm-dialog-message"
+  >
+    <div class="space-y-6 p-6">
+      <header class="space-y-2">
+        <h2 id="confirm-dialog-title" class="text-lg font-semibold text-slate-800" data-role="title">Confirm action</h2>
+        <p id="confirm-dialog-message" class="text-sm text-slate-600" data-role="message">Are you sure?</p>
+      </header>
+      <div class="flex justify-end gap-3">
+        <button type="button" data-role="cancel" class="inline-flex items-center justify-center rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400">Cancel</button>
+        <button type="button" data-role="confirm" class="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-semibold text-white shadow focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 transition bg-indigo-600 hover:bg-indigo-500 focus-visible:outline-indigo-600">Confirm</button>
+      </div>
+    </div>
+  </dialog>
 
   <template id="student-row-template">
     <tr>
-      <td class="px-4 py-3 font-medium text-slate-700"></td>
-      <td class="px-4 py-3 text-slate-500"></td>
-      <td class="px-4 py-3 text-slate-500"></td>
-      <td class="px-4 py-3 text-slate-500"></td>
+      <td class="px-4 py-3 font-medium text-slate-700" data-cell="code"></td>
+      <td class="px-4 py-3 text-slate-700" data-cell="name"></td>
+      <td class="px-4 py-3 text-slate-500" data-cell="grade"></td>
+      <td class="px-4 py-3 text-slate-500" data-cell="email"></td>
+      <td class="px-4 py-3 text-slate-500" data-cell="contact"></td>
+      <td class="px-4 py-3 text-slate-500" data-cell="dob"></td>
+      <td class="px-4 py-3 text-slate-500" data-cell="notes"></td>
       <td class="px-4 py-3 text-right text-sm">
         <div class="flex justify-end gap-2">
           <button type="button" class="student-edit rounded-md border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Edit</button>
@@ -267,11 +370,11 @@
   </template>
 
   <template id="attendance-history-template">
-    <article class="rounded-lg border border-slate-100 p-4">
-      <div class="flex items-center justify-between">
+    <article class="rounded-lg border border-slate-100 p-4 shadow-sm">
+      <header class="flex items-center justify-between">
         <h3 class="text-sm font-semibold text-slate-700"></h3>
-        <span class="text-xs font-semibold"></span>
-      </div>
+        <span class="rounded-full bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-600"></span>
+      </header>
       <dl class="mt-3 grid grid-cols-3 gap-2 text-xs text-slate-500">
         <div>
           <dt class="uppercase tracking-wide">Present</dt>
@@ -308,10 +411,112 @@
       <p class="mt-3 text-sm text-slate-600"></p>
     </article>
   </template>
+
+  <template id="class-row-template">
+    <li class="rounded-lg border border-slate-200 p-4">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex-1">
+          <div class="flex items-center gap-2">
+            <span class="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600" data-role="student-count"></span>
+            <span class="rounded-full bg-indigo-50 px-2 py-1 text-xs font-semibold text-indigo-600 hidden" data-role="active-badge">Active</span>
+          </div>
+          <label class="mt-3 block text-xs font-semibold uppercase tracking-wider text-slate-400">Class name</label>
+          <input type="text" class="class-name-input mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        </div>
+        <div class="flex items-center gap-2 self-end sm:self-auto">
+          <button type="button" data-action="save" class="rounded-md border border-indigo-200 px-3 py-2 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Save</button>
+          <button type="button" data-action="delete" class="rounded-md border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-500">Delete</button>
+        </div>
+      </div>
+    </li>
+  </template>
+
+  <template id="toast-template">
+    <div class="pointer-events-auto flex items-start gap-3 rounded-lg border px-4 py-3 shadow-lg">
+      <div class="mt-1 h-2 w-2 flex-shrink-0 rounded-full" data-role="indicator"></div>
+      <div class="flex-1 text-sm" data-role="message"></div>
+      <button type="button" class="text-xs font-semibold text-slate-500 hover:text-slate-700" aria-label="Dismiss notification">Dismiss</button>
+    </div>
+  </template>
+
+  <div id="toast-region" class="pointer-events-none fixed bottom-4 right-4 z-50 flex w-full max-w-sm flex-col gap-2"></div>
+
   <script>
+    const StorageLayer = (() => {
+      const DB_NAME = 'zantra-classmate';
+      const STORE_NAME = 'app-state';
+      let dbInstance = null;
+      let fallbackToLocalStorage = false;
+
+      const ensureDb = async () => {
+        if (fallbackToLocalStorage || dbInstance) return;
+        if (!('indexedDB' in window) || !window.idb) {
+          fallbackToLocalStorage = true;
+          return;
+        }
+        try {
+          dbInstance = await window.idb.openDB(DB_NAME, 1, {
+            upgrade(db) {
+              if (!db.objectStoreNames.contains(STORE_NAME)) {
+                db.createObjectStore(STORE_NAME);
+              }
+            }
+          });
+        } catch (error) {
+          console.warn('IndexedDB initialization failed, using localStorage fallback.', error);
+          fallbackToLocalStorage = true;
+        }
+      };
+
+      const readLocalStorage = (key) => {
+        try {
+          return JSON.parse(window.localStorage.getItem(key) || 'null');
+        } catch (error) {
+          console.warn('Failed to parse localStorage data.', error);
+          return null;
+        }
+      };
+
+      return {
+        async load(key) {
+          await ensureDb();
+          if (fallbackToLocalStorage || !dbInstance) {
+            return readLocalStorage(key);
+          }
+          try {
+            return await dbInstance.get(STORE_NAME, key);
+          } catch (error) {
+            console.warn('IndexedDB load failed, using localStorage fallback.', error);
+            fallbackToLocalStorage = true;
+            return readLocalStorage(key);
+          }
+        },
+        async save(key, value) {
+          const serialized = JSON.parse(JSON.stringify(value));
+          await ensureDb();
+          if (fallbackToLocalStorage || !dbInstance) {
+            window.localStorage.setItem(key, JSON.stringify(serialized));
+            return;
+          }
+          try {
+            await dbInstance.put(STORE_NAME, serialized, key);
+          } catch (error) {
+            console.warn('IndexedDB save failed, persisting to localStorage.', error);
+            fallbackToLocalStorage = true;
+            window.localStorage.setItem(key, JSON.stringify(serialized));
+          }
+        }
+      };
+    })();
+
     const ZantraCore = (() => {
-      const STORAGE_KEY = 'zantra_classmate_state_v1';
+      const STORAGE_KEY = 'zantra_classmate_state_v2';
+      const defaultClassId = 'class-default';
       const defaultState = Object.freeze({
+        classes: [
+          { id: defaultClassId, name: 'Homeroom A' }
+        ],
+        activeClassId: defaultClassId,
         students: [],
         attendanceRecords: [],
         notes: [],
@@ -320,12 +525,14 @@
           teacherName: '',
           academicYear: new Date().getFullYear().toString(),
           brandColor: '#4f46e5',
+          logoDataUrl: '',
           lastUpdated: new Date().toISOString()
         }
       });
 
       let state = null;
       const subscribers = {
+        classes: new Set(),
         students: new Set(),
         attendance: new Set(),
         notes: new Set(),
@@ -341,115 +548,185 @@
           try {
             callback(snapshot);
           } catch (error) {
-            console.error('Subscriber error for', domain, error);
+            console.error(`Subscriber error for ${domain}`, error);
           }
         });
-        subscribers.state.forEach((callback) => {
-          try {
-            callback(snapshot);
-          } catch (error) {
-            console.error('State subscriber error', error);
-          }
-        });
+        if (domain !== 'state') {
+          subscribers.state.forEach((callback) => {
+            try {
+              callback(snapshot);
+            } catch (error) {
+              console.error('State subscriber error', error);
+            }
+          });
+        }
       };
 
-      const generateId = (prefix) => `${prefix}-${Math.random().toString(36).slice(2, 9)}`;
+      const generateId = (prefix) => `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
 
-      const normalizeAttendanceRecord = (record) => {
-        if (!record || typeof record !== 'object') {
-          return null;
+      const normalizeDate = (value) => {
+        if (!value) return '';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return '';
+        return date.toISOString().slice(0, 10);
+      };
+
+      const normalizeClasses = (rawClasses) => {
+        const seenIds = new Set();
+        const classes = Array.isArray(rawClasses)
+          ? rawClasses
+              .map((item) => {
+                if (!item || typeof item !== 'object') return null;
+                const id = typeof item.id === 'string' && item.id.trim() ? item.id.trim() : generateId('class');
+                if (seenIds.has(id)) return null;
+                seenIds.add(id);
+                return {
+                  id,
+                  name: item.name ? String(item.name).trim() || 'Unnamed Class' : 'Unnamed Class'
+                };
+              })
+              .filter(Boolean)
+          : [];
+        if (!classes.length) {
+          classes.push(...clone(defaultState.classes));
         }
-        const normalized = {
-          id: record.id || generateId('att'),
-          date: record.date || new Date().toISOString().slice(0, 10),
-          entries: {}
+        return classes;
+      };
+
+      const normalizeStudent = (student, fallbackClassId, allowedClassIds) => {
+        if (!student || typeof student !== 'object') return null;
+        const classId = allowedClassIds.has(student.classId) ? student.classId : fallbackClassId;
+        return {
+          id: student.id || generateId('stu'),
+          classId,
+          studentId: student.studentId ? String(student.studentId).trim() : '',
+          name: student.name ? String(student.name).trim() : '',
+          grade: student.grade ? String(student.grade).trim() : '',
+          email: student.email ? String(student.email).trim() : '',
+          dob: normalizeDate(student.dob),
+          guardianContact: student.guardianContact ? String(student.guardianContact).trim() : '',
+          notes: student.notes ? String(student.notes).trim() : ''
         };
-        const rawEntries = record.entries || record.statusByStudent || record.students || {};
-        if (Array.isArray(rawEntries)) {
-          rawEntries.forEach((item) => {
-            if (item && item.studentId) {
-              normalized.entries[item.studentId] = {
-                status: item.status || 'Present',
-                remark: item.remark || ''
-              };
-            }
-          });
-        } else if (rawEntries && typeof rawEntries === 'object') {
-          Object.entries(rawEntries).forEach(([studentId, entry]) => {
+      };
+
+      const normalizeAttendanceRecord = (record, fallbackClassId, allowedClassIds) => {
+        if (!record || typeof record !== 'object') return null;
+        const classId = allowedClassIds.has(record.classId) ? record.classId : fallbackClassId;
+        const date = normalizeDate(record.date) || new Date().toISOString().slice(0, 10);
+        const entries = {};
+        if (record.entries && typeof record.entries === 'object') {
+          Object.entries(record.entries).forEach(([studentId, entry]) => {
             if (!studentId) return;
-            if (typeof entry === 'string') {
-              normalized.entries[studentId] = { status: entry, remark: '' };
-            } else if (entry && typeof entry === 'object') {
-              normalized.entries[studentId] = {
-                status: entry.status || 'Present',
-                remark: entry.remark || ''
-              };
-            }
+            entries[studentId] = {
+              status: entry && entry.status ? String(entry.status) : 'Present',
+              remark: entry && entry.remark ? String(entry.remark).trim() : ''
+            };
           });
         }
-        return normalized;
+        return {
+          id: record.id || generateId('att'),
+          classId,
+          date,
+          entries
+        };
+      };
+
+      const normalizeNote = (note, fallbackClassId, allowedClassIds) => {
+        if (!note || typeof note !== 'object') return null;
+        const classId = allowedClassIds.has(note.classId) ? note.classId : fallbackClassId;
+        return {
+          id: note.id || generateId('note'),
+          classId,
+          studentId: note.studentId ? String(note.studentId).trim() : '',
+          category: note.category ? String(note.category).trim() : '',
+          progress: note.progress ? String(note.progress).trim() : 'On Track',
+          text: note.text ? String(note.text).trim() : '',
+          createdAt: note.createdAt ? String(note.createdAt) : new Date().toISOString()
+        };
+      };
+
+      const normalizeSettings = (settings) => {
+        const base = clone(defaultState.settings);
+        if (!settings || typeof settings !== 'object') {
+          return base;
+        }
+        base.schoolName = settings.schoolName ? String(settings.schoolName).trim() : base.schoolName;
+        base.teacherName = settings.teacherName ? String(settings.teacherName).trim() : base.teacherName;
+        base.academicYear = settings.academicYear ? String(settings.academicYear).trim() : base.academicYear;
+        base.brandColor = settings.brandColor ? String(settings.brandColor) : base.brandColor;
+        base.logoDataUrl = settings.logoDataUrl && typeof settings.logoDataUrl === 'string' ? settings.logoDataUrl : '';
+        base.lastUpdated = settings.lastUpdated ? String(settings.lastUpdated) : base.lastUpdated;
+        return base;
       };
 
       const normalizeState = (raw) => {
-        const nextState = clone(defaultState);
+        const base = clone(defaultState);
         if (!raw || typeof raw !== 'object') {
-          return nextState;
+          return base;
         }
-        nextState.students = Array.isArray(raw.students)
-          ? raw.students.filter(Boolean).map((student) => ({
-              id: student.id || generateId('stu'),
-              name: student.name ? String(student.name) : 'Unnamed Student',
-              grade: student.grade ? String(student.grade) : '',
-              guardianContact: student.guardianContact ? String(student.guardianContact) : '',
-              notes: student.notes ? String(student.notes) : ''
-            }))
+        const classes = normalizeClasses(raw.classes);
+        const allowedClassIds = new Set(classes.map((cls) => cls.id));
+        const fallbackClassId = classes[0].id;
+        const activeClassId = allowedClassIds.has(raw.activeClassId) ? raw.activeClassId : fallbackClassId;
+
+        base.classes = classes;
+        base.activeClassId = activeClassId;
+
+        base.students = Array.isArray(raw.students)
+          ? raw.students.map((student) => normalizeStudent(student, fallbackClassId, allowedClassIds)).filter(Boolean)
           : [];
 
-        nextState.attendanceRecords = Array.isArray(raw.attendanceRecords)
-          ? raw.attendanceRecords.map(normalizeAttendanceRecord).filter(Boolean)
+        base.attendanceRecords = Array.isArray(raw.attendanceRecords)
+          ? raw.attendanceRecords
+              .map((record) => normalizeAttendanceRecord(record, fallbackClassId, allowedClassIds))
+              .filter(Boolean)
           : [];
 
-        nextState.notes = Array.isArray(raw.notes)
-          ? raw.notes.filter(Boolean).map((note) => ({
-              id: note.id || generateId('note'),
-              studentId: note.studentId || '',
-              category: note.category ? String(note.category) : '',
-              progress: note.progress ? String(note.progress) : 'On Track',
-              text: note.text ? String(note.text) : '',
-              createdAt: note.createdAt || new Date().toISOString()
-            }))
+        base.notes = Array.isArray(raw.notes)
+          ? raw.notes.map((note) => normalizeNote(note, fallbackClassId, allowedClassIds)).filter(Boolean)
           : [];
 
-        nextState.settings = {
-          schoolName: raw.settings && raw.settings.schoolName ? String(raw.settings.schoolName) : defaultState.settings.schoolName,
-          teacherName: raw.settings && raw.settings.teacherName ? String(raw.settings.teacherName) : defaultState.settings.teacherName,
-          academicYear: raw.settings && raw.settings.academicYear ? String(raw.settings.academicYear) : defaultState.settings.academicYear,
-          brandColor: raw.settings && raw.settings.brandColor ? String(raw.settings.brandColor) : defaultState.settings.brandColor,
-          lastUpdated: raw.settings && raw.settings.lastUpdated ? String(raw.settings.lastUpdated) : defaultState.settings.lastUpdated
-        };
+        base.settings = normalizeSettings(raw.settings);
 
-        return nextState;
+        return base;
       };
 
       const persist = () => {
-        if (!state) return;
+        if (!state) return Promise.resolve();
         state.settings.lastUpdated = new Date().toISOString();
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        return StorageLayer.save(STORAGE_KEY, state).catch((error) => {
+          console.error('Failed to persist application state.', error);
+        });
       };
 
-      const getSnapshot = () => clone(state);
+      const getSnapshot = () => (state ? clone(state) : clone(defaultState));
+
+      const validateContact = (value) => {
+        if (!value) return true;
+        return /^[+()\-\.\s\d]{7,}$/.test(value);
+      };
+
+      const validateEmail = (value) => {
+        if (!value) return true;
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+      };
 
       return {
-        init() {
+        async init() {
           try {
-            const rawState = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || 'null');
+            const rawState = await StorageLayer.load(STORAGE_KEY);
             state = normalizeState(rawState);
           } catch (error) {
-            console.warn('Failed to parse stored data, resetting state.', error);
+            console.warn('Failed to load stored data, resetting state.', error);
             state = clone(defaultState);
-            persist();
+            await persist();
           }
           notify('state');
+          notify('classes');
+          notify('students');
+          notify('attendance');
+          notify('notes');
+          notify('settings');
         },
         subscribe(domain, callback) {
           if (!subscribers[domain]) {
@@ -458,66 +735,200 @@
           subscribers[domain].add(callback);
           return () => subscribers[domain].delete(callback);
         },
-        getStudents() {
-          return clone(state.students);
+        getSnapshot,
+        getClasses() {
+          return state ? clone(state.classes) : [];
+        },
+        getActiveClassId() {
+          return state ? state.activeClassId : defaultClassId;
+        },
+        getActiveClass() {
+          if (!state) return null;
+          return state.classes.find((cls) => cls.id === state.activeClassId) || state.classes[0] || null;
+        },
+        setActiveClass(classId) {
+          if (!state) return;
+          const exists = state.classes.some((cls) => cls.id === classId);
+          if (!exists || state.activeClassId === classId) return;
+          state.activeClassId = classId;
+          persist();
+          notify('classes');
+          notify('students');
+          notify('attendance');
+          notify('notes');
+        },
+        createClass(name) {
+          if (!state) return null;
+          const trimmed = name.trim();
+          if (!trimmed) {
+            throw new Error('Class name is required.');
+          }
+          const exists = state.classes.some((cls) => cls.name.toLowerCase() === trimmed.toLowerCase());
+          if (exists) {
+            throw new Error('A class with this name already exists.');
+          }
+          const newClass = { id: generateId('class'), name: trimmed };
+          state.classes.push(newClass);
+          persist();
+          notify('classes');
+          return clone(newClass);
+        },
+        renameClass(classId, name) {
+          if (!state) return;
+          const trimmed = name.trim();
+          if (!trimmed) {
+            throw new Error('Class name cannot be empty.');
+          }
+          const target = state.classes.find((cls) => cls.id === classId);
+          if (!target) {
+            throw new Error('Class not found.');
+          }
+          const conflict = state.classes.some(
+            (cls) => cls.id !== classId && cls.name.toLowerCase() === trimmed.toLowerCase()
+          );
+          if (conflict) {
+            throw new Error('Another class already uses this name.');
+          }
+          target.name = trimmed;
+          persist();
+          notify('classes');
+        },
+        deleteClass(classId) {
+          if (!state) return;
+          if (state.classes.length <= 1) {
+            throw new Error('At least one class must remain.');
+          }
+          if (state.activeClassId === classId) {
+            throw new Error('Switch to a different class before deleting this one.');
+          }
+          const hasStudents = state.students.some((student) => student.classId === classId);
+          const hasAttendance = state.attendanceRecords.some((record) => record.classId === classId);
+          const hasNotes = state.notes.some((note) => note.classId === classId);
+          if (hasStudents || hasAttendance || hasNotes) {
+            throw new Error('Remove students, attendance, and notes before deleting this class.');
+          }
+          state.classes = state.classes.filter((cls) => cls.id !== classId);
+          persist();
+          notify('classes');
+        },
+        getStudents(includeAll = false) {
+          if (!state) return [];
+          const classId = includeAll ? null : state.activeClassId;
+          const filtered = classId
+            ? state.students.filter((student) => student.classId === classId)
+            : state.students;
+          return clone(filtered);
         },
         getStudentById(id) {
+          if (!state) return null;
           return state.students.find((student) => student.id === id) || null;
         },
         saveStudent(student) {
-          const isUpdate = Boolean(student.id);
-          const existingIndex = student.id ? state.students.findIndex((item) => item.id === student.id) : -1;
+          if (!state) return null;
           const payload = {
             id: student.id || generateId('stu'),
-            name: student.name.trim(),
-            grade: student.grade.trim(),
-            guardianContact: student.guardianContact.trim(),
-            notes: student.notes.trim()
+            classId: student.classId || state.activeClassId,
+            studentId: student.studentId ? student.studentId.trim() : '',
+            name: student.name ? student.name.trim() : '',
+            grade: student.grade ? student.grade.trim() : '',
+            email: student.email ? student.email.trim() : '',
+            dob: normalizeDate(student.dob),
+            guardianContact: student.guardianContact ? student.guardianContact.trim() : '',
+            notes: student.notes ? student.notes.trim() : ''
           };
-          if (!payload.name) {
-            throw new Error('Student name is required');
+          if (!payload.classId) {
+            throw new Error('Select a class for this student.');
           }
-          if (isUpdate && existingIndex >= 0) {
-            state.students.splice(existingIndex, 1, payload);
+          if (!payload.studentId) {
+            throw new Error('Student ID is required.');
+          }
+          if (!payload.name) {
+            throw new Error('Student name is required.');
+          }
+          if (!state.classes.some((cls) => cls.id === payload.classId)) {
+            throw new Error('Selected class does not exist.');
+          }
+          if (!validateContact(payload.guardianContact)) {
+            throw new Error('Guardian contact must contain at least seven digits and may include +, spaces, or dashes.');
+          }
+          if (!validateEmail(payload.email)) {
+            throw new Error('Enter a valid email address.');
+          }
+          const duplicateId = state.students.find(
+            (existing) =>
+              existing.classId === payload.classId &&
+              existing.id !== payload.id &&
+              existing.studentId.toLowerCase() === payload.studentId.toLowerCase()
+          );
+          if (duplicateId) {
+            throw new Error('A student with this ID already exists in the selected class.');
+          }
+          if (payload.dob) {
+            const duplicateIdentity = state.students.find(
+              (existing) =>
+                existing.classId === payload.classId &&
+                existing.id !== payload.id &&
+                existing.name.toLowerCase() === payload.name.toLowerCase() &&
+                existing.dob === payload.dob
+            );
+            if (duplicateIdentity) {
+              throw new Error('A student with the same name and date of birth already exists in this class.');
+            }
+          }
+          const index = state.students.findIndex((item) => item.id === payload.id);
+          if (index >= 0) {
+            state.students.splice(index, 1, payload);
           } else {
             state.students.push(payload);
           }
           persist();
           notify('students');
-          return payload;
+          notify('attendance');
+          notify('notes');
+          return clone(payload);
         },
         deleteStudent(studentId) {
+          if (!state) return;
           state.students = state.students.filter((student) => student.id !== studentId);
           state.notes = state.notes.filter((note) => note.studentId !== studentId);
           state.attendanceRecords = state.attendanceRecords.map((record) => {
-            const normalized = normalizeAttendanceRecord(record);
-            if (normalized.entries[studentId]) {
-              delete normalized.entries[studentId];
-            }
-            return normalized;
+            if (!record.entries[studentId]) return record;
+            const next = clone(record);
+            delete next.entries[studentId];
+            return next;
           });
           persist();
           notify('students');
-          notify('notes');
           notify('attendance');
+          notify('notes');
         },
         getAttendanceRecords() {
-          return clone(state.attendanceRecords);
+          if (!state) return [];
+          return clone(state.attendanceRecords.filter((record) => record.classId === state.activeClassId));
         },
         saveAttendance(date, entries) {
-          if (!date) throw new Error('Attendance date is required');
-          const recordDate = date;
+          if (!state) return null;
+          const sessionDate = normalizeDate(date);
+          if (!sessionDate) {
+            throw new Error('Attendance date is required.');
+          }
           const normalizedEntries = {};
           Object.entries(entries || {}).forEach(([studentId, entry]) => {
             normalizedEntries[studentId] = {
-              status: entry.status || 'Present',
-              remark: entry.remark ? entry.remark.trim() : ''
+              status: entry && entry.status ? entry.status : 'Present',
+              remark: entry && entry.remark ? entry.remark.trim() : ''
             };
           });
-          const existingIndex = state.attendanceRecords.findIndex((record) => record.date === recordDate);
+          const existingIndex = state.attendanceRecords.findIndex(
+            (record) => record.classId === state.activeClassId && record.date === sessionDate
+          );
           const payload = {
-            id: existingIndex >= 0 ? state.attendanceRecords[existingIndex].id : generateId('att'),
-            date: recordDate,
+            id:
+              existingIndex >= 0
+                ? state.attendanceRecords[existingIndex].id
+                : generateId('att'),
+            classId: state.activeClassId,
+            date: sessionDate,
             entries: normalizedEntries
           };
           if (existingIndex >= 0) {
@@ -527,25 +938,32 @@
           }
           persist();
           notify('attendance');
-          return payload;
+          return clone(payload);
         },
         getNotes() {
-          return clone(state.notes);
+          if (!state) return [];
+          return clone(state.notes.filter((note) => note.classId === state.activeClassId));
         },
         saveNote(note) {
+          if (!state) return null;
           const payload = {
             id: note.id || generateId('note'),
+            classId: state.activeClassId,
             studentId: note.studentId,
-            category: note.category.trim(),
-            progress: note.progress.trim(),
-            text: note.text.trim(),
+            category: note.category ? note.category.trim() : '',
+            progress: note.progress ? note.progress.trim() : 'On Track',
+            text: note.text ? note.text.trim() : '',
             createdAt: note.createdAt || new Date().toISOString()
           };
           if (!payload.studentId) {
-            throw new Error('Note student is required');
+            throw new Error('Select a student for this note.');
           }
           if (!payload.text) {
-            throw new Error('Note text is required');
+            throw new Error('Note text is required.');
+          }
+          const exists = state.students.some((student) => student.id === payload.studentId);
+          if (!exists) {
+            throw new Error('The selected student no longer exists.');
           }
           const index = state.notes.findIndex((item) => item.id === payload.id);
           if (index >= 0) {
@@ -555,27 +973,36 @@
           }
           persist();
           notify('notes');
-          return payload;
+          return clone(payload);
         },
         deleteNote(noteId) {
+          if (!state) return;
           state.notes = state.notes.filter((note) => note.id !== noteId);
           persist();
           notify('notes');
         },
         getSettings() {
-          return clone(state.settings);
+          return state ? clone(state.settings) : clone(defaultState.settings);
         },
         saveSettings(settings) {
+          if (!state) return;
           state.settings = {
             ...state.settings,
-            ...settings,
+            schoolName: settings.schoolName ? settings.schoolName.trim() : state.settings.schoolName,
+            teacherName: settings.teacherName ? settings.teacherName.trim() : state.settings.teacherName,
+            academicYear: settings.academicYear ? settings.academicYear.trim() : state.settings.academicYear,
+            brandColor: settings.brandColor || state.settings.brandColor,
+            logoDataUrl: typeof settings.logoDataUrl === 'string' ? settings.logoDataUrl : state.settings.logoDataUrl,
             lastUpdated: new Date().toISOString()
           };
           persist();
           notify('settings');
         },
         createBackup() {
+          if (!state) return 'null';
           const backup = {
+            classes: state.classes,
+            activeClassId: state.activeClassId,
             students: state.students,
             attendanceRecords: state.attendanceRecords,
             notes: state.notes,
@@ -584,22 +1011,167 @@
           return JSON.stringify(backup, null, 2);
         },
         restoreFromBackup(jsonString) {
-          try {
-            const parsed = JSON.parse(jsonString);
-            state = normalizeState(parsed);
-            persist();
-            notify('students');
-            notify('attendance');
-            notify('notes');
-            notify('settings');
-            notify('state');
-          } catch (error) {
-            throw new Error('Invalid backup file. Please verify the JSON format.');
-          }
+          const parsed = JSON.parse(jsonString);
+          state = normalizeState(parsed);
+          persist();
+          notify('classes');
+          notify('students');
+          notify('attendance');
+          notify('notes');
+          notify('settings');
+          notify('state');
         }
       };
     })();
 
+    const Toast = (() => {
+      const region = document.getElementById('toast-region');
+      const template = document.getElementById('toast-template');
+      const TYPE_STYLES = {
+        info: { indicator: 'bg-indigo-500', border: 'border-indigo-200 bg-white', text: 'text-slate-700' },
+        success: { indicator: 'bg-emerald-500', border: 'border-emerald-200 bg-emerald-50', text: 'text-emerald-900' },
+        error: { indicator: 'bg-rose-500', border: 'border-rose-200 bg-rose-50', text: 'text-rose-900' }
+      };
+
+      const removeToast = (toast) => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 200);
+      };
+
+      const createToast = (message, type) => {
+        const fragment = template.content.cloneNode(true);
+        const wrapper = fragment.firstElementChild;
+        const styles = TYPE_STYLES[type] || TYPE_STYLES.info;
+        wrapper.classList.add(...styles.border.split(' '), 'opacity-0', 'translate-y-2', 'transition');
+        wrapper.querySelector('[data-role="indicator"]').classList.add(...styles.indicator.split(' '));
+        const messageNode = wrapper.querySelector('[data-role="message"]');
+        messageNode.classList.add(...styles.text.split(' '));
+        messageNode.textContent = message;
+        const dismissButton = wrapper.querySelector('button');
+        dismissButton.addEventListener('click', () => removeToast(wrapper));
+        setTimeout(() => wrapper.classList.remove('opacity-0', 'translate-y-2'), 50);
+        setTimeout(() => removeToast(wrapper), 6000);
+        return wrapper;
+      };
+
+      return {
+        info(message) {
+          region.appendChild(createToast(message, 'info'));
+        },
+        success(message) {
+          region.appendChild(createToast(message, 'success'));
+        },
+        error(message) {
+          region.appendChild(createToast(message, 'error'));
+        }
+      };
+    })();
+    const ConfirmDialog = (() => {
+      const dialog = document.getElementById('confirm-dialog');
+      const titleNode = dialog.querySelector('[data-role="title"]');
+      const messageNode = dialog.querySelector('[data-role="message"]');
+      const confirmButton = dialog.querySelector('[data-role="confirm"]');
+      const cancelButton = dialog.querySelector('[data-role="cancel"]');
+
+      const TONE_STYLES = {
+        primary: ['bg-indigo-600', 'hover:bg-indigo-500', 'focus-visible:outline-indigo-600'],
+        danger: ['bg-rose-600', 'hover:bg-rose-500', 'focus-visible:outline-rose-600']
+      };
+      const toneClassSet = new Set(Object.values(TONE_STYLES).flat());
+      const confirmBaseClasses = Array.from(confirmButton.classList).filter(
+        (className) => !toneClassSet.has(className)
+      );
+      const cancelBaseClasses = Array.from(cancelButton.classList);
+
+      let resolver = null;
+
+      const openDialog = () => {
+        if (typeof dialog.showModal === 'function') {
+          dialog.showModal();
+        } else {
+          dialog.setAttribute('open', 'true');
+        }
+      };
+
+      const closeDialog = () => {
+        if (typeof dialog.close === 'function') {
+          dialog.close();
+        } else {
+          dialog.removeAttribute('open');
+        }
+      };
+
+      const resolveWith = (value) => {
+        if (!resolver) return;
+        const resolve = resolver;
+        resolver = null;
+        closeDialog();
+        resolve(value);
+      };
+
+      const applyTone = (tone) => {
+        confirmButton.className = '';
+        confirmButton.classList.add(...confirmBaseClasses);
+        const toneClasses = TONE_STYLES[tone] || TONE_STYLES.primary;
+        confirmButton.classList.add(...toneClasses);
+      };
+
+      const resetButtons = () => {
+        cancelButton.className = '';
+        cancelButton.classList.add(...cancelBaseClasses);
+      };
+
+      confirmButton.addEventListener('click', () => {
+        resolveWith(true);
+      });
+
+      cancelButton.addEventListener('click', () => {
+        resolveWith(false);
+      });
+
+      dialog.addEventListener('cancel', (event) => {
+        event.preventDefault();
+        resolveWith(false);
+      });
+
+      dialog.addEventListener('click', (event) => {
+        if (event.target === dialog) {
+          resolveWith(false);
+        }
+      });
+
+      return {
+        confirm(options = {}) {
+          const config =
+            typeof options === 'string'
+              ? { message: options }
+              : options;
+          const {
+            title = 'Confirm action',
+            message = 'Are you sure you want to continue?',
+            confirmLabel = 'Confirm',
+            cancelLabel = 'Cancel',
+            tone = 'primary'
+          } = config;
+          if (resolver) {
+            resolveWith(false);
+          }
+          resetButtons();
+          applyTone(tone);
+          titleNode.textContent = title;
+          messageNode.textContent = message;
+          confirmButton.textContent = confirmLabel;
+          cancelButton.textContent = cancelLabel;
+          openDialog();
+          return new Promise((resolve) => {
+            resolver = resolve;
+            setTimeout(() => {
+              confirmButton.focus();
+            }, 50);
+          });
+        }
+      };
+    })();
     const TabNavigation = (() => {
       let activeTab = 'overview-section';
       const buttons = [];
@@ -619,6 +1191,7 @@
           button.classList.toggle('bg-indigo-600', isActive);
           button.classList.toggle('text-white', isActive);
           button.classList.toggle('text-slate-600', !isActive);
+          button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
         });
         activeTab = targetId;
       };
@@ -644,83 +1217,231 @@
 
       return {
         init() {
-          document.querySelectorAll('.tab-button').forEach((button, idx) => {
+          document.querySelectorAll('.tab-button').forEach((button, index) => {
             buttons.push(button);
-            button.id = `${button.dataset.target}-tab`;
             button.setAttribute('role', 'tab');
-            button.setAttribute('aria-controls', button.dataset.target);
-            button.addEventListener('click', () => switchTo(button.dataset.target));
-            button.addEventListener('keydown', handleKeyNavigation);
-            if (idx === 0) {
+            button.setAttribute('tabindex', index === 0 ? '0' : '-1');
+            button.addEventListener('click', () => {
+              buttons.forEach((btn) => btn.setAttribute('tabindex', '-1'));
+              button.setAttribute('tabindex', '0');
               switchTo(button.dataset.target);
+            });
+            button.addEventListener('keydown', handleKeyNavigation);
+          });
+          switchTo(activeTab);
+        }
+      };
+    })();
+
+    const ClassModule = (() => {
+      const selector = document.getElementById('class-selector');
+      const manageButton = document.getElementById('manage-classes');
+      const dialog = document.getElementById('class-manager-dialog');
+      const closeButton = document.getElementById('class-manager-close');
+      const form = document.getElementById('class-form');
+      const nameField = document.getElementById('class-name');
+      const list = document.getElementById('class-list');
+      const template = document.getElementById('class-row-template');
+
+      const getStudentCount = (classId) => ZantraCore.getStudents(true).filter((student) => student.classId === classId).length;
+      const getAttendanceCount = (classId) => ZantraCore.getSnapshot().attendanceRecords.filter((record) => record.classId === classId).length;
+      const getNoteCount = (classId) => ZantraCore.getSnapshot().notes.filter((note) => note.classId === classId).length;
+
+      const renderSelector = () => {
+        const classes = ZantraCore.getClasses();
+        const activeClassId = ZantraCore.getActiveClassId();
+        selector.innerHTML = '';
+        classes.forEach((cls) => {
+          const option = document.createElement('option');
+          option.value = cls.id;
+          option.textContent = cls.name;
+          if (cls.id === activeClassId) {
+            option.selected = true;
+          }
+          selector.appendChild(option);
+        });
+      };
+
+      const renderList = () => {
+        const classes = ZantraCore.getClasses();
+        const activeClassId = ZantraCore.getActiveClassId();
+        list.innerHTML = '';
+        classes.forEach((cls) => {
+          const item = template.content.cloneNode(true);
+          const li = item.firstElementChild;
+          const input = li.querySelector('.class-name-input');
+          const studentBadge = li.querySelector('[data-role="student-count"]');
+          const activeBadge = li.querySelector('[data-role="active-badge"]');
+          const saveButton = li.querySelector('[data-action="save"]');
+          const deleteButton = li.querySelector('[data-action="delete"]');
+
+          input.value = cls.name;
+          input.dataset.classId = cls.id;
+          studentBadge.textContent = `${getStudentCount(cls.id)} students`;
+          if (cls.id === activeClassId) {
+            activeBadge.classList.remove('hidden');
+            li.classList.add('border-indigo-200');
+          }
+          const canDelete =
+            classes.length > 1 &&
+            cls.id !== activeClassId &&
+            getStudentCount(cls.id) === 0 &&
+            getAttendanceCount(cls.id) === 0 &&
+            getNoteCount(cls.id) === 0;
+          deleteButton.disabled = !canDelete;
+          deleteButton.classList.toggle('opacity-40', !canDelete);
+          deleteButton.classList.toggle('cursor-not-allowed', !canDelete);
+
+          saveButton.addEventListener('click', () => {
+            try {
+              ZantraCore.renameClass(cls.id, input.value);
+              Toast.success('Class updated successfully.');
+            } catch (error) {
+              Toast.error(error.message);
             }
           });
+
+          deleteButton.addEventListener('click', () => {
+            try {
+              ZantraCore.deleteClass(cls.id);
+              Toast.success('Class deleted.');
+            } catch (error) {
+              Toast.error(error.message);
+            }
+          });
+
+          list.appendChild(item);
+        });
+      };
+
+      const openDialog = () => {
+        renderList();
+        if (typeof dialog.showModal === 'function') {
+          dialog.showModal();
+        } else {
+          dialog.setAttribute('open', 'true');
+        }
+      };
+
+      const closeDialog = () => {
+        if (typeof dialog.close === 'function') {
+          dialog.close();
+        } else {
+          dialog.removeAttribute('open');
+        }
+      };
+
+      return {
+        init() {
+          selector.addEventListener('change', (event) => {
+            ZantraCore.setActiveClass(event.target.value);
+          });
+
+          manageButton.addEventListener('click', () => {
+            openDialog();
+          });
+
+          closeButton.addEventListener('click', () => {
+            closeDialog();
+          });
+
+          form.addEventListener('submit', (event) => {
+            event.preventDefault();
+            try {
+              ZantraCore.createClass(nameField.value);
+              nameField.value = '';
+              Toast.success('New class added.');
+              renderList();
+            } catch (error) {
+              Toast.error(error.message);
+            }
+          });
+
+          dialog.addEventListener('close', () => {
+            renderSelector();
+          });
+
+          ZantraCore.subscribe('classes', () => {
+            renderSelector();
+            renderList();
+          });
+
+          renderSelector();
         }
       };
     })();
     const StudentModule = (() => {
       const form = document.getElementById('student-form');
       const idField = document.getElementById('student-id');
+      const classField = document.getElementById('student-class');
+      const codeField = document.getElementById('student-code');
       const nameField = document.getElementById('student-name');
       const gradeField = document.getElementById('student-grade');
+      const dobField = document.getElementById('student-dob');
+      const emailField = document.getElementById('student-email');
       const contactField = document.getElementById('student-contact');
       const notesField = document.getElementById('student-notes');
       const resetButton = document.getElementById('student-reset');
-      const submitButton = document.getElementById('student-submit');
       const listBody = document.getElementById('student-list');
       const emptyState = document.getElementById('student-empty');
       const searchField = document.getElementById('student-search');
-      const rowTemplate = document.getElementById('student-row-template');
+      const template = document.getElementById('student-row-template');
 
       let students = [];
+
+      const syncClassOptions = () => {
+        const classes = ZantraCore.getClasses();
+        const activeClassId = ZantraCore.getActiveClassId();
+        classField.innerHTML = '';
+        classes.forEach((cls) => {
+          const option = document.createElement('option');
+          option.value = cls.id;
+          option.textContent = cls.name;
+          if (cls.id === activeClassId) {
+            option.selected = true;
+          }
+          classField.appendChild(option);
+        });
+      };
 
       const resetForm = () => {
         idField.value = '';
         form.reset();
-        submitButton.textContent = 'Save Student';
+        classField.value = ZantraCore.getActiveClassId();
       };
 
       const populateForm = (student) => {
         idField.value = student.id;
+        classField.value = student.classId;
+        codeField.value = student.studentId;
         nameField.value = student.name;
         gradeField.value = student.grade;
+        dobField.value = student.dob || '';
+        emailField.value = student.email;
         contactField.value = student.guardianContact;
         notesField.value = student.notes;
-        submitButton.textContent = 'Update Student';
-        nameField.focus();
+        codeField.focus();
       };
 
-      const handleSubmit = (event) => {
-        event.preventDefault();
-        const payload = {
-          id: idField.value || undefined,
-          name: nameField.value.trim(),
-          grade: gradeField.value.trim(),
-          guardianContact: contactField.value.trim(),
-          notes: notesField.value.trim()
-        };
-        if (!payload.name) {
-          nameField.focus();
-          return;
-        }
-        try {
-          ZantraCore.saveStudent(payload);
-          resetForm();
-        } catch (error) {
-          alert(error.message);
-        }
-      };
-
-      const handleDelete = (studentId) => {
-        if (window.confirm('Remove this student and associated records?')) {
-          ZantraCore.deleteStudent(studentId);
-        }
+      const formatDate = (value) => {
+        if (!value) return '';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return '';
+        return date.toLocaleDateString();
       };
 
       const renderStudents = () => {
         const query = searchField.value.trim().toLowerCase();
         const filtered = students.filter((student) => {
-          return [student.name, student.grade, student.guardianContact, student.notes]
+          if (!query) return true;
+          return [
+            student.studentId,
+            student.name,
+            student.grade,
+            student.email,
+            student.guardianContact,
+            student.notes
+          ]
             .join(' ')
             .toLowerCase()
             .includes(query);
@@ -735,27 +1456,60 @@
           .slice()
           .sort((a, b) => a.name.localeCompare(b.name))
           .forEach((student) => {
-            const row = rowTemplate.content.cloneNode(true);
-            const cells = row.querySelectorAll('td');
-            cells[0].textContent = student.name;
-            cells[1].textContent = student.grade || '—';
-            cells[2].textContent = student.guardianContact || '—';
-            cells[3].textContent = student.notes || '—';
-            row.querySelector('.student-edit').addEventListener('click', () => populateForm(student));
-            row.querySelector('.student-delete').addEventListener('click', () => handleDelete(student.id));
+            const row = template.content.cloneNode(true);
+            row.querySelector('[data-cell="code"]').textContent = student.studentId;
+            row.querySelector('[data-cell="name"]').textContent = student.name;
+            row.querySelector('[data-cell="grade"]').textContent = student.grade || '—';
+            row.querySelector('[data-cell="email"]').textContent = student.email || '—';
+            row.querySelector('[data-cell="contact"]').textContent = student.guardianContact || '—';
+            row.querySelector('[data-cell="dob"]').textContent = formatDate(student.dob) || '—';
+            row.querySelector('[data-cell="notes"]').textContent = student.notes || '—';
+            const editButton = row.querySelector('.student-edit');
+            const deleteButton = row.querySelector('.student-delete');
+            editButton.addEventListener('click', () => populateForm(student));
+            deleteButton.addEventListener('click', async () => {
+              const confirmed = await ConfirmDialog.confirm({
+                title: 'Delete student',
+                message: `Delete ${student.name}? This also removes notes and attendance links.`,
+                confirmLabel: 'Delete student',
+                cancelLabel: 'Keep student',
+                tone: 'danger'
+              });
+              if (!confirmed) return;
+              ZantraCore.deleteStudent(student.id);
+              Toast.success('Student deleted.');
+            });
             listBody.appendChild(row);
           });
       };
 
+      const handleSubmit = (event) => {
+        event.preventDefault();
+        try {
+          const saved = ZantraCore.saveStudent({
+            id: idField.value,
+            classId: classField.value,
+            studentId: codeField.value,
+            name: nameField.value,
+            grade: gradeField.value,
+            dob: dobField.value,
+            email: emailField.value,
+            guardianContact: contactField.value,
+            notes: notesField.value
+          });
+          Toast.success(`Student ${saved.name} saved.`);
+          resetForm();
+        } catch (error) {
+          Toast.error(error.message);
+        }
+      };
+
       const syncStudents = () => {
         students = ZantraCore.getStudents();
+        syncClassOptions();
         renderStudents();
         AttendanceModule.refreshStudentList(students);
-        NotesModule.refreshStudentOptions(students);
-        OverviewModule.refreshSnapshot();
-        ReportsModule.refreshSummary();
-        ReportsModule.refreshChart();
-        OverviewModule.refreshChart();
+        NotesModule.refreshStudents(students);
       };
 
       return {
@@ -764,6 +1518,8 @@
           resetButton.addEventListener('click', resetForm);
           searchField.addEventListener('input', renderStudents);
           ZantraCore.subscribe('students', syncStudents);
+          ZantraCore.subscribe('classes', syncClassOptions);
+          syncClassOptions();
           syncStudents();
         },
         getStudents() {
@@ -771,7 +1527,6 @@
         }
       };
     })();
-
     const AttendanceModule = (() => {
       const form = document.getElementById('attendance-form');
       const dateField = document.getElementById('attendance-date');
@@ -792,25 +1547,31 @@
       };
 
       const buildStudentControl = (student) => {
-        const wrapper = document.createElement('div');
+        const wrapper = document.createElement('fieldset');
         wrapper.className = 'rounded-lg border border-slate-200 p-3';
         wrapper.innerHTML = `
-          <div class="flex items-center justify-between">
-            <span class="text-sm font-semibold text-slate-700">${student.name}</span>
+          <legend class="flex items-center justify-between text-sm font-semibold text-slate-700">
+            <span>${student.name}</span>
             <span class="text-xs text-slate-400">${student.grade || ''}</span>
+          </legend>
+          <div class="mt-3 grid grid-cols-3 gap-2 text-xs sm:text-sm">
+            <label class="flex">
+              <input type="radio" name="att-${student.id}" value="Present" class="peer sr-only" checked />
+              <span class="flex w-full items-center justify-center rounded-md border border-emerald-200 px-3 py-2 font-semibold text-emerald-600 transition peer-checked:bg-emerald-500 peer-checked:text-white">Present</span>
+            </label>
+            <label class="flex">
+              <input type="radio" name="att-${student.id}" value="Late" class="peer sr-only" />
+              <span class="flex w-full items-center justify-center rounded-md border border-amber-200 px-3 py-2 font-semibold text-amber-600 transition peer-checked:bg-amber-500 peer-checked:text-white">Late</span>
+            </label>
+            <label class="flex">
+              <input type="radio" name="att-${student.id}" value="Absent" class="peer sr-only" />
+              <span class="flex w-full items-center justify-center rounded-md border border-rose-200 px-3 py-2 font-semibold text-rose-600 transition peer-checked:bg-rose-500 peer-checked:text-white">Absent</span>
+            </label>
           </div>
-          <div class="mt-2 flex flex-wrap gap-3" role="radiogroup" aria-label="Attendance status for ${student.name}">
-            <label class="inline-flex items-center gap-2 text-xs font-semibold text-emerald-600">
-              <input type="radio" name="att-${student.id}" value="Present" class="h-4 w-4 text-emerald-600" checked /> Present
-            </label>
-            <label class="inline-flex items-center gap-2 text-xs font-semibold text-amber-500">
-              <input type="radio" name="att-${student.id}" value="Late" class="h-4 w-4 text-amber-500" /> Late
-            </label>
-            <label class="inline-flex items-center gap-2 text-xs font-semibold text-rose-600">
-              <input type="radio" name="att-${student.id}" value="Absent" class="h-4 w-4 text-rose-600" /> Absent
-            </label>
-          </div>
-          <input type="text" name="remark-${student.id}" placeholder="Optional remark" class="mt-2 w-full rounded-md border border-slate-200 px-3 py-2 text-xs focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          <label class="mt-3 block text-xs font-medium text-slate-500">
+            Remark
+            <input type="text" name="remark-${student.id}" placeholder="Optional" class="mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-xs focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </label>
         `;
         return wrapper;
       };
@@ -858,7 +1619,6 @@
           heading.textContent = new Date(record.date).toLocaleDateString();
           const tag = article.querySelector('span');
           tag.textContent = `${present.length} present`;
-          tag.className = 'rounded-full bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-600';
           const counts = article.querySelectorAll('dd');
           counts[0].textContent = present.length;
           counts[1].textContent = late.length;
@@ -888,13 +1648,9 @@
         if (!record) return;
         Object.entries(record.entries || {}).forEach(([studentId, entry]) => {
           const radio = form.querySelector(`input[name="att-${studentId}"][value="${defaultStatus(entry.status)}"]`);
-          if (radio) {
-            radio.checked = true;
-          }
+          if (radio) radio.checked = true;
           const remarkField = form.querySelector(`input[name="remark-${studentId}"]`);
-          if (remarkField) {
-            remarkField.value = entry.remark || '';
-          }
+          if (remarkField) remarkField.value = entry.remark || '';
         });
       };
 
@@ -913,17 +1669,22 @@
 
       const handleSubmit = (event) => {
         event.preventDefault();
-        if (!students.length) return;
+        if (!students.length) {
+          Toast.info('Add students before recording attendance.');
+          return;
+        }
         const date = dateField.value;
         if (!date) {
           dateField.focus();
+          Toast.error('Select a session date.');
           return;
         }
         try {
           ZantraCore.saveAttendance(date, collectFormData());
+          Toast.success('Attendance saved.');
           fillExistingForDate(date);
         } catch (error) {
-          alert(error.message);
+          Toast.error(error.message);
         }
       };
 
@@ -959,6 +1720,7 @@
         }
       };
     })();
+
     const NotesModule = (() => {
       const form = document.getElementById('note-form');
       const idField = document.getElementById('note-id');
@@ -1003,15 +1765,20 @@
         }
         emptyState.classList.add('hidden');
         filtered.forEach((note) => {
-          const student = students.find((item) => item.id === note.studentId);
           const card = template.content.cloneNode(true);
-          card.querySelector('h3').textContent = student ? student.name : 'Unknown Student';
-          card.querySelector('header p').textContent = `${note.category || 'General'} • ${note.progress || 'On Track'} • ${new Date(note.createdAt).toLocaleString()}`;
-          card.querySelector('p + p').textContent = note.text;
+          const student = students.find((item) => item.id === note.studentId);
+          const heading = card.querySelector('h3');
+          heading.textContent = student ? student.name : 'Unknown Student';
+          const meta = card.querySelector('p');
+          meta.textContent = `${new Date(note.createdAt).toLocaleString()} • ${note.category || 'General'} • ${note.progress}`;
+          card.querySelector('article > p').textContent = note.text;
           card.querySelector('.note-edit').addEventListener('click', () => populateForm(note));
           card.querySelector('.note-delete').addEventListener('click', () => {
-            if (window.confirm('Delete this note?')) {
+            try {
               ZantraCore.deleteNote(note.id);
+              Toast.success('Note deleted.');
+            } catch (error) {
+              Toast.error(error.message);
             }
           });
           listContainer.appendChild(card);
@@ -1020,38 +1787,24 @@
 
       const handleSubmit = (event) => {
         event.preventDefault();
-        if (!studentSelect.value) {
-          studentSelect.focus();
-          return;
-        }
-        if (!textField.value.trim()) {
-          textField.focus();
-          return;
-        }
         try {
-          ZantraCore.saveNote({
-            id: idField.value || undefined,
+          const payload = {
+            id: idField.value,
             studentId: studentSelect.value,
-            category: categoryField.value.trim(),
+            category: categoryField.value,
             progress: progressSelect.value,
-            text: textField.value.trim(),
-            createdAt: idField.value ? undefined : new Date().toISOString()
-          });
+            text: textField.value
+          };
+          ZantraCore.saveNote(payload);
+          Toast.success('Note saved.');
           resetForm();
         } catch (error) {
-          alert(error.message);
+          Toast.error(error.message);
         }
       };
 
-      const syncNotes = () => {
-        notes = ZantraCore.getNotes();
-        renderNotes();
-        OverviewModule.refreshSnapshot();
-        ReportsModule.refreshSummary();
-      };
-
-      const refreshStudentOptions = (nextStudents) => {
-        students = nextStudents.slice();
+      const syncStudents = () => {
+        students = StudentModule.getStudents();
         studentSelect.innerHTML = '<option value="">Select a student</option>';
         filterSelect.innerHTML = '<option value="">All students</option>';
         students
@@ -1064,7 +1817,13 @@
             studentSelect.appendChild(option);
             filterSelect.appendChild(option.cloneNode(true));
           });
+      };
+
+      const syncNotes = () => {
+        notes = ZantraCore.getNotes();
         renderNotes();
+        OverviewModule.refreshSnapshot();
+        ReportsModule.refreshSummary();
       };
 
       return {
@@ -1073,31 +1832,34 @@
           resetButton.addEventListener('click', resetForm);
           filterSelect.addEventListener('change', renderNotes);
           ZantraCore.subscribe('notes', syncNotes);
+          ZantraCore.subscribe('students', syncStudents);
+          syncStudents();
           syncNotes();
         },
-        refreshStudentOptions
+        refreshStudents(nextStudents) {
+          students = nextStudents.slice();
+          syncStudents();
+        }
       };
     })();
-
     const OverviewModule = (() => {
       const totalStudents = document.getElementById('overview-total-students');
       const totalNotes = document.getElementById('overview-total-notes');
       const attendanceRate = document.getElementById('overview-attendance-rate');
       const lastUpdated = document.getElementById('overview-last-updated');
+      const activeClass = document.getElementById('overview-active-class');
       const chartCanvas = document.getElementById('overview-attendance-chart');
       let attendanceChart = null;
 
       const calculateAttendanceRate = (records) => {
-        const recentRecords = records
-          .slice()
-          .filter((record) => {
-            const daysDiff = (Date.now() - new Date(record.date).getTime()) / (1000 * 60 * 60 * 24);
-            return daysDiff <= 30;
-          });
+        const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+        const recent = records.filter((record) => new Date(record.date).getTime() >= cutoff);
+        if (!recent.length) return 0;
         let present = 0;
         let total = 0;
-        recentRecords.forEach((record) => {
-          Object.values(record.entries || {}).forEach((entry) => {
+        recent.forEach((record) => {
+          const entries = Object.values(record.entries || {});
+          entries.forEach((entry) => {
             total += 1;
             if ((entry.status || '').toLowerCase().startsWith('pres')) {
               present += 1;
@@ -1113,10 +1875,12 @@
         const notes = ZantraCore.getNotes();
         const attendance = ZantraCore.getAttendanceRecords();
         const settings = ZantraCore.getSettings();
+        const currentClass = ZantraCore.getActiveClass();
+        activeClass.textContent = currentClass ? currentClass.name : '—';
         totalStudents.textContent = students.length;
         totalNotes.textContent = notes.length;
         attendanceRate.textContent = `${calculateAttendanceRate(attendance)}%`;
-        lastUpdated.textContent = new Date(settings.lastUpdated).toLocaleString();
+        lastUpdated.textContent = settings.lastUpdated ? new Date(settings.lastUpdated).toLocaleString() : '—';
       };
 
       const refreshChart = () => {
@@ -1157,9 +1921,7 @@
               y: {
                 beginAtZero: true,
                 max: 100,
-                ticks: {
-                  callback: (value) => `${value}%`
-                }
+                ticks: { callback: (value) => `${value}%` }
               }
             }
           }
@@ -1253,8 +2015,14 @@
       const teacherField = document.getElementById('setting-teacher');
       const yearField = document.getElementById('setting-year');
       const brandField = document.getElementById('setting-brand');
+      const logoInput = document.getElementById('setting-logo');
+      const logoPreview = document.getElementById('settings-logo-preview');
+      const logoRemove = document.getElementById('setting-logo-remove');
       const appTitle = document.getElementById('app-title');
       const appSubtitle = document.getElementById('app-subtitle');
+      const appLogo = document.getElementById('app-logo');
+
+      let currentLogo = '';
 
       const applyBranding = (settings) => {
         document.documentElement.style.setProperty('--zantra-brand', settings.brandColor || '#4f46e5');
@@ -1262,6 +2030,13 @@
         appSubtitle.textContent = settings.teacherName
           ? `${settings.teacherName} • ${settings.schoolName || 'Zantra Academy'} • ${settings.academicYear}`
           : `${settings.schoolName || 'Zantra Academy'} • ${settings.academicYear}`;
+        if (settings.logoDataUrl) {
+          appLogo.src = settings.logoDataUrl;
+          appLogo.classList.remove('hidden');
+        } else {
+          appLogo.src = '';
+          appLogo.classList.add('hidden');
+        }
       };
 
       const populateForm = () => {
@@ -1270,17 +2045,63 @@
         teacherField.value = settings.teacherName || '';
         yearField.value = settings.academicYear || '';
         brandField.value = settings.brandColor || '#4f46e5';
+        currentLogo = settings.logoDataUrl || '';
+        if (currentLogo) {
+          logoPreview.src = currentLogo;
+          logoPreview.classList.remove('hidden');
+          logoRemove.classList.remove('hidden');
+        } else {
+          logoPreview.src = '';
+          logoPreview.classList.add('hidden');
+          logoRemove.classList.add('hidden');
+        }
         applyBranding(settings);
+      };
+
+      const readLogoFile = (file) =>
+        new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => reject(new Error('Unable to read the selected logo file.'));
+          reader.readAsDataURL(file);
+        });
+
+      const handleLogoChange = async (event) => {
+        const file = event.target.files && event.target.files[0];
+        if (!file) return;
+        if (file.size > 1024 * 1024) {
+          Toast.error('Logo must be smaller than 1MB.');
+          logoInput.value = '';
+          return;
+        }
+        try {
+          currentLogo = await readLogoFile(file);
+          logoPreview.src = currentLogo;
+          logoPreview.classList.remove('hidden');
+          logoRemove.classList.remove('hidden');
+        } catch (error) {
+          Toast.error(error.message);
+        }
+      };
+
+      const handleLogoRemove = () => {
+        currentLogo = '';
+        logoPreview.src = '';
+        logoPreview.classList.add('hidden');
+        logoRemove.classList.add('hidden');
+        logoInput.value = '';
       };
 
       const handleSubmit = (event) => {
         event.preventDefault();
         ZantraCore.saveSettings({
-          schoolName: schoolField.value.trim(),
-          teacherName: teacherField.value.trim(),
-          academicYear: yearField.value.trim(),
-          brandColor: brandField.value
+          schoolName: schoolField.value,
+          teacherName: teacherField.value,
+          academicYear: yearField.value,
+          brandColor: brandField.value,
+          logoDataUrl: currentLogo
         });
+        Toast.success('Settings updated.');
       };
 
       const syncSettings = () => {
@@ -1297,20 +2118,22 @@
           brandField.addEventListener('input', () => {
             appTitle.style.color = brandField.value;
           });
+          logoInput.addEventListener('change', handleLogoChange);
+          logoRemove.addEventListener('click', handleLogoRemove);
           ZantraCore.subscribe('settings', syncSettings);
           populateForm();
         },
         applyBranding
       };
     })();
-
     const ExportModule = (() => {
-      const exportButton = document.getElementById('export-pdf');
+      const pdfButton = document.getElementById('export-pdf');
+      const csvButton = document.getElementById('export-csv');
       const backupButton = document.getElementById('backup-json');
       const restoreInput = document.getElementById('restore-json');
 
-      const downloadFile = (filename, content) => {
-        const blob = new Blob([content], { type: 'application/json' });
+      const downloadFile = (filename, content, type) => {
+        const blob = new Blob([content], { type });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
@@ -1321,10 +2144,72 @@
         URL.revokeObjectURL(url);
       };
 
+      const buildCsv = () => {
+        const settings = ZantraCore.getSettings();
+        const activeClass = ZantraCore.getActiveClass();
+        const students = ZantraCore.getStudents();
+        const attendance = ZantraCore.getAttendanceRecords();
+        const notes = ZantraCore.getNotes();
+        const safe = (value) => {
+          if (value == null) return '';
+          const stringValue = String(value).replace(/"/g, '""');
+          return `"${stringValue}"`;
+        };
+
+        const lines = [];
+        lines.push('Section,Field 1,Field 2,Field 3,Field 4,Field 5,Field 6');
+        lines.push(
+          `Students,${safe('Student ID')},${safe('Name')},${safe('Grade')},${safe('Email')},${safe('Guardian Contact')},${safe('DOB')}`
+        );
+        students
+          .slice()
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .forEach((student) => {
+            lines.push(
+              `Students,${safe(student.studentId)},${safe(student.name)},${safe(student.grade)},${safe(student.email)},${safe(student.guardianContact)},${safe(student.dob)}`
+            );
+          });
+        lines.push('');
+        lines.push(`Attendance,${safe('Date')},${safe('Present')},${safe('Late')},${safe('Absent')},${safe('Notes')}`);
+        attendance
+          .slice()
+          .sort((a, b) => (a.date > b.date ? 1 : -1))
+          .forEach((record) => {
+            const entries = Object.values(record.entries || {});
+            const present = entries.filter((entry) => (entry.status || '').toLowerCase().startsWith('pres')).length;
+            const late = entries.filter((entry) => (entry.status || '').toLowerCase().startsWith('late')).length;
+            const absent = entries.filter((entry) => (entry.status || '').toLowerCase().startsWith('abs')).length;
+            lines.push(`Attendance,${safe(new Date(record.date).toLocaleDateString())},${present},${late},${absent},${safe(entries.length)}`);
+          });
+        lines.push('');
+        lines.push(`Notes,${safe('Date')},${safe('Student')},${safe('Progress')},${safe('Category')},${safe('Note')}`);
+        notes
+          .slice()
+          .sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1))
+          .forEach((note) => {
+            const student = students.find((item) => item.id === note.studentId);
+            lines.push(
+              `Notes,${safe(new Date(note.createdAt).toLocaleString())},${safe(student ? student.name : 'Unknown')},${safe(note.progress)},${safe(note.category)},${safe(note.text)}`
+            );
+          });
+        lines.unshift(
+          `Summary,${safe(settings.schoolName || 'Zantra Academy')},${safe(settings.teacherName || 'Class Teacher')},${safe(settings.academicYear)},${safe(activeClass ? activeClass.name : 'Active Class')}`
+        );
+        return lines.join('\r\n');
+      };
+
+      const handleCsvExport = () => {
+        const csv = buildCsv();
+        const timestamp = new Date().toISOString().replace(/[:T]/g, '-').split('.')[0];
+        downloadFile(`zantra-classmate-${timestamp}.csv`, csv, 'text/csv;charset=utf-8;');
+        Toast.success('CSV export ready.');
+      };
+
       const handleBackup = () => {
         const content = ZantraCore.createBackup();
         const timestamp = new Date().toISOString().replace(/[:T]/g, '-').split('.')[0];
-        downloadFile(`zantra-classmate-backup-${timestamp}.json`, content);
+        downloadFile(`zantra-classmate-backup-${timestamp}.json`, content, 'application/json');
+        Toast.success('Backup downloaded.');
       };
 
       const handleRestore = (event) => {
@@ -1334,15 +2219,15 @@
         reader.onload = (loadEvent) => {
           try {
             ZantraCore.restoreFromBackup(loadEvent.target.result);
-            alert('Backup restored successfully.');
+            Toast.success('Backup restored successfully.');
           } catch (error) {
-            alert(error.message);
+            Toast.error(error.message);
           } finally {
             restoreInput.value = '';
           }
         };
         reader.onerror = () => {
-          alert('Failed to read the selected file.');
+          Toast.error('Failed to read the selected file.');
           restoreInput.value = '';
         };
         reader.readAsText(file);
@@ -1354,6 +2239,7 @@
         const margin = 40;
         const lineHeight = 18;
         const settings = ZantraCore.getSettings();
+        const activeClass = ZantraCore.getActiveClass();
         const students = ZantraCore.getStudents();
         const attendance = ZantraCore.getAttendanceRecords();
         const notes = ZantraCore.getNotes();
@@ -1371,24 +2257,28 @@
           doc.setTextColor(color);
           const lines = doc.splitTextToSize(text, 515);
           lines.forEach((line) => {
-            doc.text(line, margin, y);
-            y += lineHeight;
             if (y > 780) {
               doc.addPage();
               y = margin;
             }
+            doc.text(line, margin, y);
+            y += lineHeight;
           });
         };
 
         addHeading(settings.schoolName || 'Zantra Academy', 20);
         addText(`${settings.teacherName || 'Class Teacher'} • Academic Year ${settings.academicYear || ''}`);
+        addText(`Class: ${activeClass ? activeClass.name : 'N/A'}`);
         y += 10;
 
         addHeading('Student Overview', 14);
         addText(`Total Students: ${students.length}`);
-        students.slice().sort((a, b) => a.name.localeCompare(b.name)).forEach((student) => {
-          addText(`• ${student.name} (${student.grade || 'No grade'}) - ${student.guardianContact || 'No contact'}`);
-        });
+        students
+          .slice()
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .forEach((student) => {
+            addText(`• ${student.name} (${student.studentId}) — ${student.grade || 'No grade'} — ${student.guardianContact || 'No contact'}`);
+          });
 
         y += 10;
         addHeading('Attendance Summary', 14);
@@ -1413,7 +2303,7 @@
             .slice()
             .sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1))
             .forEach((note) => {
-              const student = ZantraCore.getStudentById(note.studentId);
+              const student = students.find((item) => item.id === note.studentId);
               addText(`${new Date(note.createdAt).toLocaleString()} • ${student ? student.name : 'Unknown Student'} • ${note.progress || 'On Track'}`);
               addText(note.text, 10, '#4b5563');
             });
@@ -1424,7 +2314,8 @@
 
       return {
         init() {
-          exportButton.addEventListener('click', handleExportPdf);
+          pdfButton.addEventListener('click', handleExportPdf);
+          csvButton.addEventListener('click', handleCsvExport);
           backupButton.addEventListener('click', handleBackup);
           restoreInput.addEventListener('change', handleRestore);
         }
@@ -1434,6 +2325,7 @@
     const App = (() => {
       const initializeSections = () => {
         TabNavigation.init();
+        ClassModule.init();
         StudentModule.init();
         AttendanceModule.init();
         NotesModule.init();
@@ -1453,8 +2345,8 @@
       };
 
       return {
-        init() {
-          ZantraCore.init();
+        async init() {
+          await ZantraCore.init();
           initializeSections();
           handleInitialRender();
         }
